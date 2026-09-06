@@ -7,6 +7,34 @@ import type { AuditLog, AuditLogPage } from '../../../lib/api/types';
 
 const pageSize = 25;
 
+interface DateFilterProps {
+  id: string;
+  label: string;
+  emptyLabel: string;
+  value: string;
+  min?: string;
+  max?: string;
+  onChange: (value: string) => void;
+}
+
+const DateFilter = ({ id, label, emptyLabel, value, min, max, onChange }: DateFilterProps) => (
+  <Field label={label} htmlFor={id}>
+    <div className="relative min-w-0">
+      <i className="ri-calendar-event-line pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-base text-green" aria-hidden="true" />
+      <input
+        id={id}
+        type="date"
+        className={`${inputClasses} min-w-0 max-w-full cursor-pointer pl-11 text-sm [color-scheme:light] dark:[color-scheme:dark]`}
+        value={value}
+        min={min}
+        max={max}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {!value && <span className="pointer-events-none absolute inset-y-px left-11 right-11 flex items-center bg-surface text-sm text-ink-variant" aria-hidden="true">{emptyLabel}</span>}
+    </div>
+  </Field>
+);
+
 const actionTone = (action: string) => {
   const value = action.toLowerCase();
   if (value.includes('delete') || value.includes('fail') || value.includes('revoke')) return 'border-error/20 bg-error/10 text-error';
@@ -43,17 +71,17 @@ export default function AdminActivityLogsPage() {
   const locale = fr ? 'fr-CA' : 'en-CA';
   const copy = fr ? {
     title: 'Journal des activités', subtitle: 'Une piste chronologique des actions administratives et des changements apportés aux données.',
-    refresh: 'Actualiser', filters: 'Affiner le journal', search: 'Rechercher', searchHint: 'Acteur, action, identifiant ou trace…', actor: 'Acteur', actorHint: 'Courriel de l’administrateur', action: 'Action', module: 'Module', from: 'Du', to: 'Au', allActions: 'Toutes les actions', allModules: 'Tous les modules', apply: 'Appliquer', reset: 'Réinitialiser',
+    refresh: 'Actualiser', filters: 'Affiner le journal', search: 'Rechercher', searchHint: 'Acteur, action, identifiant ou trace…', actor: 'Acteur', actorHint: 'Courriel de l’administrateur', action: 'Action', module: 'Module', from: 'Du', to: 'Au', anyDate: 'Toute date', allActions: 'Toutes les actions', allModules: 'Tous les modules', apply: 'Appliquer', reset: 'Réinitialiser',
     today: 'Actions aujourd’hui', activeActors: 'Acteurs sur 30 jours', security: 'Événements de sécurité', retention: 'Conservation', days: 'jours',
     timeline: 'Chronologie opérationnelle', result: 'résultat', results: 'résultats', date: 'Date et heure', target: 'Élément concerné', details: 'Détails', view: 'Consulter', system: 'Système', emptyTitle: 'Aucune activité trouvée', emptyText: 'Modifiez les filtres ou la période pour afficher d’autres entrées.', error: 'Impossible de charger le journal des activités.', loading: 'Chargement du journal…',
-    previous: 'Précédent', next: 'Suivant', page: 'Page', of: 'sur', close: 'Fermer', eventDetails: 'Détail de l’activité', identity: 'Identité et traçabilité', timestamp: 'Horodatage', ip: 'Adresse IP', trace: 'Identifiant de trace', entityId: 'Identifiant de l’élément', changes: 'Données enregistrées', noChanges: 'Aucun détail de champ n’a été enregistré pour cette action.', redacted: 'Les secrets et données d’authentification sont masqués automatiquement.',
+    previous: 'Précédent', next: 'Suivant', page: 'Page', of: 'sur', close: 'Fermer', eventDetails: 'Détail de l’activité', identity: 'Identité et traçabilité', timestamp: 'Horodatage', ip: 'Adresse IP', trace: 'Identifiant de trace', entityId: 'Identifiant de l’élément', user: 'Utilisateur', changes: 'Données enregistrées', noChanges: 'Aucun détail de champ n’a été enregistré pour cette action.', redacted: 'Les secrets et données d’authentification sont masqués automatiquement.',
     Added: 'Ajout', Modified: 'Modification', Deleted: 'Suppression',
   } : {
     title: 'Activity log', subtitle: 'A chronological audit trail of administrative actions and data changes.',
-    refresh: 'Refresh', filters: 'Refine the log', search: 'Search', searchHint: 'Actor, action, identifier or trace…', actor: 'Actor', actorHint: 'Administrator email', action: 'Action', module: 'Module', from: 'From', to: 'To', allActions: 'All actions', allModules: 'All modules', apply: 'Apply', reset: 'Reset',
+    refresh: 'Refresh', filters: 'Refine the log', search: 'Search', searchHint: 'Actor, action, identifier or trace…', actor: 'Actor', actorHint: 'Administrator email', action: 'Action', module: 'Module', from: 'From', to: 'To', anyDate: 'Any date', allActions: 'All actions', allModules: 'All modules', apply: 'Apply', reset: 'Reset',
     today: 'Actions today', activeActors: 'Actors in 30 days', security: 'Security events', retention: 'Retention', days: 'days',
     timeline: 'Operational timeline', result: 'result', results: 'results', date: 'Date and time', target: 'Affected item', details: 'Details', view: 'View', system: 'System', emptyTitle: 'No activity found', emptyText: 'Adjust the filters or date range to display other entries.', error: 'Unable to load the activity log.', loading: 'Loading activity log…',
-    previous: 'Previous', next: 'Next', page: 'Page', of: 'of', close: 'Close', eventDetails: 'Activity details', identity: 'Identity and traceability', timestamp: 'Timestamp', ip: 'IP address', trace: 'Trace identifier', entityId: 'Item identifier', changes: 'Recorded data', noChanges: 'No field details were recorded for this action.', redacted: 'Secrets and authentication data are automatically redacted.',
+    previous: 'Previous', next: 'Next', page: 'Page', of: 'of', close: 'Close', eventDetails: 'Activity details', identity: 'Identity and traceability', timestamp: 'Timestamp', ip: 'IP address', trace: 'Trace identifier', entityId: 'Item identifier', user: 'User', changes: 'Recorded data', noChanges: 'No field details were recorded for this action.', redacted: 'Secrets and authentication data are automatically redacted.',
     Added: 'Added', Modified: 'Modified', Deleted: 'Deleted',
   };
 
@@ -91,6 +119,12 @@ export default function AdminActivityLogsPage() {
   const humanizeEntity = (value: string) => value.replace(/([a-z])([A-Z])/g, '$1 $2');
   const formatDate = (value: string) => new Date(value).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
   const selectedChanges = useMemo(() => parseChanges(selected?.changesJson), [selected]);
+  const presentChange = (key: string, value: string) => {
+    if (!key.toLowerCase().endsWith('userid')) return { label: humanizeEntity(key), value };
+    const user = data?.relatedUsers?.[value.toLowerCase()] ?? data?.relatedUsers?.[value];
+    if (!user) return { label: copy.user, value };
+    return { label: copy.user, value: user.displayName === user.email ? user.email : `${user.displayName} · ${user.email}` };
+  };
 
   const applyFilters = (event: React.FormEvent) => {
     event.preventDefault();
@@ -142,7 +176,10 @@ export default function AdminActivityLogsPage() {
           <Field label={copy.actor} htmlFor="audit-actor" className="xl:col-span-2"><input id="audit-actor" type="email" maxLength={254} className={inputClasses} placeholder={copy.actorHint} value={filters.userEmail} onChange={(event) => setFilters({ ...filters, userEmail: event.target.value })} /></Field>
           <Field label={copy.action} htmlFor="audit-action" className="xl:col-span-2"><select id="audit-action" className={inputClasses} value={filters.action} onChange={(event) => setFilters({ ...filters, action: event.target.value })}><option value="">{copy.allActions}</option>{data?.filters.actions.map((value) => <option value={value} key={value}>{localizeAction(value)}</option>)}</select></Field>
           <Field label={copy.module} htmlFor="audit-module" className="xl:col-span-2"><select id="audit-module" className={inputClasses} value={filters.entityType} onChange={(event) => setFilters({ ...filters, entityType: event.target.value })}><option value="">{copy.allModules}</option>{data?.filters.entityTypes.map((value) => <option value={value} key={value}>{humanizeEntity(value)}</option>)}</select></Field>
-          <div className="grid grid-cols-2 gap-3 md:col-span-2 xl:col-span-3"><Field label={copy.from} htmlFor="audit-from"><input id="audit-from" type="date" className={inputClasses} value={filters.from} max={filters.to || undefined} onChange={(event) => setFilters({ ...filters, from: event.target.value })} /></Field><Field label={copy.to} htmlFor="audit-to"><input id="audit-to" type="date" className={inputClasses} value={filters.to} min={filters.from || undefined} onChange={(event) => setFilters({ ...filters, to: event.target.value })} /></Field></div>
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2 md:col-span-2 xl:col-span-3">
+            <DateFilter id="audit-from" label={copy.from} emptyLabel={copy.anyDate} value={filters.from} max={filters.to || undefined} onChange={(value) => setFilters({ ...filters, from: value })} />
+            <DateFilter id="audit-to" label={copy.to} emptyLabel={copy.anyDate} value={filters.to} min={filters.from || undefined} onChange={(value) => setFilters({ ...filters, to: value })} />
+          </div>
         </div>
         <div className="mt-5 flex flex-wrap gap-3"><Button type="submit" disabled={loading}><i className="ri-filter-3-line" aria-hidden="true" />{copy.apply}</Button><Button type="button" variant="tertiary" onClick={resetFilters}>{copy.reset}</Button></div>
       </form>
@@ -185,7 +222,7 @@ export default function AdminActivityLogsPage() {
         <div className="flex items-start justify-between gap-4"><div><p className="text-[9px] font-bold uppercase tracking-[.18em] text-red-link">{localizeAction(selected.action)}</p><h2 id="audit-detail-title" className="mt-1 font-display text-3xl font-bold text-green-deep">{copy.eventDetails}</h2></div><button type="button" onClick={() => setSelected(null)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line text-green transition hover:bg-green hover:text-white" aria-label={copy.close}><i className="ri-close-line text-xl" aria-hidden="true" /></button></div>
         <div className="mt-7 rounded-[22px] bg-green-deep p-6 text-white"><div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-full bg-gold font-bold text-green-deep">{initials(selected.userEmail)}</span><div className="min-w-0"><p className="truncate font-semibold">{selected.userEmail || copy.system}</p><p className="mt-1 text-xs text-white/65">{formatDate(selected.createdAtUtc)}</p></div></div><div className="mt-6 border-t border-white/15 pt-5"><span className="text-[9px] font-bold uppercase tracking-[.16em] text-gold">{copy.target}</span><p className="mt-2 font-display text-2xl font-bold">{humanizeEntity(selected.entityType)}</p></div></div>
         <section className="mt-7"><h3 className="font-display text-xl font-bold text-green-deep">{copy.identity}</h3><dl className="mt-4 divide-y divide-line rounded-2xl border border-line">{[[copy.timestamp, formatDate(selected.createdAtUtc)], [copy.ip, selected.ipAddress || '—'], [copy.trace, selected.traceId || '—'], [copy.entityId, selected.entityId || '—']].map(([label, value]) => <div key={label} className="grid gap-1 px-4 py-3 sm:grid-cols-[150px_1fr]"><dt className="text-[10px] font-bold uppercase tracking-[.1em] text-ink-variant">{label}</dt><dd className="break-all font-mono text-xs text-ink">{value}</dd></div>)}</dl></section>
-        <section className="mt-7"><div className="flex items-center justify-between gap-3"><h3 className="font-display text-xl font-bold text-green-deep">{copy.changes}</h3><i className="ri-lock-2-line text-green" aria-hidden="true" /></div>{selectedChanges.length ? <dl className="mt-4 space-y-2">{selectedChanges.map(([key, value]) => <div key={key} className="rounded-2xl border border-line bg-surface-container/55 p-4"><dt className="text-[10px] font-bold uppercase tracking-[.1em] text-green">{humanizeEntity(key)}</dt><dd className="mt-2 break-words text-sm leading-6 text-ink">{value}</dd></div>)}</dl> : <p className="mt-4 rounded-2xl border border-dashed border-line p-5 text-sm leading-6 text-ink-variant">{copy.noChanges}</p>}<p className="mt-4 flex items-start gap-2 text-xs leading-5 text-ink-variant"><i className="ri-shield-check-line mt-0.5 text-green" aria-hidden="true" />{copy.redacted}</p></section>
+        <section className="mt-7"><div className="flex items-center justify-between gap-3"><h3 className="font-display text-xl font-bold text-green-deep">{copy.changes}</h3><i className="ri-lock-2-line text-green" aria-hidden="true" /></div>{selectedChanges.length ? <dl className="mt-4 space-y-2">{selectedChanges.map(([key, value]) => { const presented = presentChange(key, value); return <div key={key} className="rounded-2xl border border-line bg-surface-container/55 p-4"><dt className="text-[10px] font-bold uppercase tracking-[.1em] text-green">{presented.label}</dt><dd className="mt-2 break-words text-sm leading-6 text-ink">{presented.value}</dd></div>; })}</dl> : <p className="mt-4 rounded-2xl border border-dashed border-line p-5 text-sm leading-6 text-ink-variant">{copy.noChanges}</p>}<p className="mt-4 flex items-start gap-2 text-xs leading-5 text-ink-variant"><i className="ri-shield-check-line mt-0.5 text-green" aria-hidden="true" />{copy.redacted}</p></section>
       </aside></div>}
     </div>
   );

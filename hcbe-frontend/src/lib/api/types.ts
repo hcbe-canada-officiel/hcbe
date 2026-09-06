@@ -66,6 +66,10 @@ export interface AuditLogPage {
     actions: string[];
     entityTypes: string[];
   };
+  relatedUsers: Record<string, {
+    displayName: string;
+    email: string;
+  }>;
 }
 
 export interface ApiResponse<T> {

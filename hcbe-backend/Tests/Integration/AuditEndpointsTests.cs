@@ -26,16 +26,25 @@ public sealed class AuditEndpointsTests : IClassFixture<CustomWebApplicationFact
     {
         var email = await AuthenticateAdminAsync();
         var uniqueAction = $"ActivityTest{Guid.NewGuid():N}";
+        var relatedUserId = Guid.NewGuid();
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Users.Add(new User
+            {
+                Id = relatedUserId,
+                Email = "related.user@example.org",
+                FirstName = "Aminata",
+                LastName = "Ouédraogo",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("RelatedUser!23")
+            });
             db.AuditLogs.Add(new AuditLog
             {
                 UserEmail = email,
                 Action = uniqueAction,
                 EntityType = "AuditTestEntity",
                 EntityId = Guid.NewGuid().ToString(),
-                ChangesJson = "{\"Status\":\"Verified\"}"
+                ChangesJson = JsonSerializer.Serialize(new { Status = "Verified", UserId = relatedUserId })
             });
             await db.SaveChangesAsync();
         }
@@ -48,6 +57,9 @@ public sealed class AuditEndpointsTests : IClassFixture<CustomWebApplicationFact
         var data = payload.RootElement.GetProperty("data");
         data.GetProperty("total").GetInt32().Should().Be(1);
         data.GetProperty("items")[0].GetProperty("action").GetString().Should().Be(uniqueAction);
+        var relatedUser = data.GetProperty("relatedUsers").GetProperty(relatedUserId.ToString());
+        relatedUser.GetProperty("displayName").GetString().Should().Be("Aminata Ouédraogo");
+        relatedUser.GetProperty("email").GetString().Should().Be("related.user@example.org");
         data.GetProperty("stats").GetProperty("retentionDays").GetInt32().Should().BeGreaterThan(0);
         data.GetProperty("filters").GetProperty("entityTypes").EnumerateArray()
             .Select(item => item.GetString()).Should().Contain("AuditTestEntity");

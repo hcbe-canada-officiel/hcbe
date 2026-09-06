@@ -1,6 +1,8 @@
 using HcbeApi.Data;
+using HcbeApi.Models;
 using Microsoft.EntityFrameworkCore;
 using HcbeApi.Helpers;
+using System.Text.Json;
 
 namespace HcbeApi.Endpoints;
 
@@ -74,6 +76,31 @@ public static class AuditEndpoints
                 .Take(safePageSize)
                 .ToListAsync(cancellationToken);
 
+            var referencedUserIds = FindReferencedUserIds(items);
+            var referencedUsers = await context.Users.AsNoTracking()
+                .Where(user => referencedUserIds.Contains(user.Id))
+                .Select(user => new
+                {
+                    user.Id,
+                    user.FirstName,
+                    user.LastName,
+                    user.Email,
+                    MemberFirstName = user.Member != null ? user.Member.FirstName : null,
+                    MemberLastName = user.Member != null ? user.Member.LastName : null
+                })
+                .ToListAsync(cancellationToken);
+            var relatedUsers = referencedUsers.ToDictionary(
+                user => user.Id.ToString(),
+                user => new
+                {
+                    displayName = string.Join(' ', new[]
+                    {
+                        string.IsNullOrWhiteSpace(user.FirstName) ? user.MemberFirstName : user.FirstName,
+                        string.IsNullOrWhiteSpace(user.LastName) ? user.MemberLastName : user.LastName
+                    }.Where(value => !string.IsNullOrWhiteSpace(value))).Trim() is { Length: > 0 } fullName ? fullName : user.Email,
+                    user.Email
+                });
+
             var now = DateTime.UtcNow;
             var lastThirtyDays = now.AddDays(-30);
             var eventsToday = await allLogs.CountAsync(log => log.CreatedAtUtc >= now.Date, cancellationToken);
@@ -96,11 +123,37 @@ public static class AuditEndpoints
                 pageSize = safePageSize,
                 totalPages = Math.Max(1, (int)Math.Ceiling(total / (double)safePageSize)),
                 stats = new { eventsToday, activeActors, securityEvents, retentionDays },
-                filters = new { actions, entityTypes }
+                filters = new { actions, entityTypes },
+                relatedUsers
             };
             return Results.Ok(ApiResponse<object>.SuccessResponse(response));
         })
         .WithTags("Administration")
         .RequireAuthorization();
+    }
+
+    private static HashSet<Guid> FindReferencedUserIds(IEnumerable<AuditLog> logs)
+    {
+        var result = new HashSet<Guid>();
+        foreach (var log in logs.Where(log => !string.IsNullOrWhiteSpace(log.ChangesJson)))
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(log.ChangesJson!);
+                if (document.RootElement.ValueKind != JsonValueKind.Object) continue;
+                foreach (var property in document.RootElement.EnumerateObject())
+                {
+                    if (!property.Name.EndsWith("UserId", StringComparison.OrdinalIgnoreCase) || property.Value.ValueKind != JsonValueKind.String) continue;
+                    if (Guid.TryParse(property.Value.GetString(), out var userId)) result.Add(userId);
+                }
+            }
+            catch (JsonException)
+            {
+                // Historical audit entries can contain plain text. They remain
+                // visible as-is and simply cannot be enriched with a user name.
+            }
+        }
+
+        return result;
     }
 }
