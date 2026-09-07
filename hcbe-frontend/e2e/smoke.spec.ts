@@ -15,6 +15,53 @@ test('public home page renders the application shell', async ({ page }) => {
   if (process.env.E2E_CAPTURE_VISUALS) await page.getByTestId('home-cta').screenshot({ path: 'test-results/home-contact-cta.png' });
 });
 
+test('community advertising is clearly identified, bilingual and responsive', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('i18nextLng', 'fr'));
+  await page.route('**/api/community-marketplace/ads?*', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      success: true,
+      data: [{
+        id: '77777777-7777-7777-7777-777777777777',
+        advertiserName: 'HCBE Canada',
+        contactEmail: 'contact@hcbe.ca',
+        title: 'Découvrez votre espace membre',
+        titleEn: 'Discover your member space',
+        body: 'Un espace communautaire conçu pour vous accompagner.',
+        bodyEn: 'A community space designed to support you.',
+        destinationUrl: 'https://example.com',
+        placements: ['Homepage'],
+        status: 'Approved',
+        budgetCents: 0,
+        currency: 'cad',
+        impressionCount: 1,
+        clickCount: 0,
+        startsAtUtc: '2026-01-01T00:00:00Z',
+        endsAtUtc: '2027-01-01T00:00:00Z',
+        createdAtUtc: '2026-01-01T00:00:00Z',
+        updatedAtUtc: '2026-01-01T00:00:00Z',
+      }],
+    }),
+  }));
+
+  await page.goto('/');
+  const slot = page.getByTestId('community-ad-slot');
+  const card = page.getByTestId('community-ad-card');
+  await expect(slot).toBeVisible();
+  await expect(slot).toContainText('Contenu commandité, vérifié par le HCBE');
+  await expect(card).toContainText('Découvrez votre espace membre');
+  await expect(card).toHaveAttribute('target', '_blank');
+  await expect(card).toHaveAttribute('rel', /sponsored/);
+
+  await page.getByRole('button', { name: 'English' }).click();
+  await expect(slot).toContainText('Sponsored content, reviewed by HCBE');
+  await expect(card).toContainText('Discover your member space');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});
+
 test('public page help explains the current feature in both languages', async ({ page }) => {
   await page.goto('/services');
   const helpButton = page.getByRole('button', { name: /aide pour cette page|help for this page/i });
