@@ -68,6 +68,51 @@ public class PartnerServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task UpdateAsync_ShouldPersistEditableFields()
+    {
+        var partner = new Partner { Name = "Original", IsActive = true, IsFeatured = true };
+        _context.Partners.Add(partner);
+        await _context.SaveChangesAsync();
+        var service = new PartnerService(_context);
+
+        var result = await service.UpdateAsync(partner.Id, new UpdatePartnerRequest(
+            Name: "Updated partner",
+            NameEn: "Updated partner EN",
+            Description: "Updated description",
+            WebsiteUrl: "https://example.com/partner",
+            IsFeatured: false,
+            IsActive: false,
+            DisplayOrder: 4));
+
+        result.Success.Should().BeTrue();
+        result.Data.Should().BeEquivalentTo(new
+        {
+            Name = "Updated partner",
+            NameEn = "Updated partner EN",
+            Description = "Updated description",
+            WebsiteUrl = "https://example.com/partner",
+            IsFeatured = false,
+            IsActive = false,
+            DisplayOrder = 4
+        });
+        partner.UpdatedAt.Should().BeAfter(partner.CreatedAt);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldRemovePartner()
+    {
+        var partner = new Partner { Name = "Partner to delete" };
+        _context.Partners.Add(partner);
+        await _context.SaveChangesAsync();
+        var service = new PartnerService(_context);
+
+        var result = await service.DeleteAsync(partner.Id);
+
+        result.Success.Should().BeTrue();
+        _context.Partners.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task CreateAsync_WithDuplicateName_ShouldReject()
     {
         _context.Partners.Add(new Partner { Name = "Existing Partner" });
