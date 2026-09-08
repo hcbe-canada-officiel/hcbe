@@ -197,7 +197,33 @@ public sealed class AiService(
 
     private async Task<List<AiSourceDto>> FindSourcesAsync(string question, string language, CancellationToken cancellationToken)
     {
-        var candidates = new List<AiSourceDto>();
+        var candidates = BuildPlatformSources(language);
+        var cmsItems = await context.CmsContentItems.AsNoTracking()
+            .Where(item => item.IsPublished && item.ContentType != "image" && item.ContentType != "url")
+            .OrderBy(item => item.Page)
+            .ThenBy(item => item.Section)
+            .ThenBy(item => item.Key)
+            .Take(160)
+            .Select(item => new
+            {
+                item.Id,
+                item.Key,
+                item.Page,
+                item.Label,
+                item.PublishedValueFr,
+                item.PublishedValueEn
+            })
+            .ToListAsync(cancellationToken);
+        candidates.AddRange(cmsItems
+            .Select(item => new AiSourceDto(
+                item.Id.ToString(),
+                "cms",
+                item.Label ?? item.Key,
+                language == "fr"
+                    ? item.PublishedValueFr ?? item.PublishedValueEn
+                    : item.PublishedValueEn ?? item.PublishedValueFr,
+                CmsPageUrl(item.Page)))
+            .Where(item => !string.IsNullOrWhiteSpace(item.Excerpt)));
         candidates.AddRange(await context.ServiceContents.AsNoTracking().Where(item => item.IsActive).Take(100)
             .Select(item => new AiSourceDto(item.Id.ToString(), "service", language == "fr" ? item.Title : item.TitleEn ?? item.Title, language == "fr" ? item.Description : item.DescriptionEn ?? item.Description, "/services")).ToListAsync(cancellationToken));
         candidates.AddRange(await context.Documents.AsNoTracking().Where(item => item.IsActive).Take(100)
@@ -214,6 +240,56 @@ public sealed class AiService(
             .Where((item, index) => item.score > 0 || index < 3)
             .Select(item => item.source with { Excerpt = Truncate(PlainText(item.source.Excerpt), 900) }).ToList();
     }
+
+    private static List<AiSourceDto> BuildPlatformSources(string language)
+    {
+        var french = language == "fr";
+        return
+        [
+            new("hcbe-services", "guide",
+                french ? "Services communautaires du HCBE" : "HCBE community services",
+                french
+                    ? "Le HCBE Canada offre de l'orientation communautaire, des demandes de services, un accès aux documents officiels et un accompagnement vers les ressources appropriées."
+                    : "HCBE Canada offers community guidance, service requests, access to official documents, and referrals to appropriate community resources.",
+                "/services"),
+            new("hcbe-membership", "guide",
+                french ? "Adhésion et espace membre" : "Membership and member space",
+                french
+                    ? "L'espace membre permet de suivre son adhésion, ses demandes, ses inscriptions aux événements et les occasions communautaires. Une adhésion est requise pour certaines démarches, notamment les candidatures."
+                    : "The member space lets people track membership, requests, event registrations, and community opportunities. Membership is required for some actions, including applications.",
+                "/espace-membre"),
+            new("hcbe-events", "guide",
+                french ? "Événements et occasions" : "Events and opportunities",
+                french
+                    ? "Le HCBE publie des événements communautaires, des emplois, des occasions de bénévolat, des formations et des activités d'affaires."
+                    : "HCBE publishes community events, jobs, volunteer opportunities, training opportunities, and business activities.",
+                "/actualites/evenements"),
+            new("hcbe-engagement", "guide",
+                french ? "Engagement communautaire" : "Community engagement",
+                french
+                    ? "La plateforme présente les associations et comités, les projets, les consultations, les bourses et les façons de contribuer à la communauté."
+                    : "The platform presents associations and committees, projects, consultations, grants, and ways to contribute to the community.",
+                "/engagement"),
+            new("hcbe-contact", "guide",
+                french ? "Contacter le HCBE" : "Contact HCBE",
+                french
+                    ? "Pour une question personnelle, sensible ou insuffisamment documentée, utilisez le formulaire de contact afin que l'équipe du HCBE dirige la demande vers la bonne personne."
+                    : "For a personal, sensitive, or insufficiently documented question, use the contact form so the HCBE team can route the request to the right person.",
+                "/contact")
+        ];
+    }
+
+    private static string CmsPageUrl(string? page) => page?.Trim().ToLowerInvariant() switch
+    {
+        "home" or "accueil" or "global" => "/",
+        "services" => "/services",
+        "news" or "actualites" => "/actualites",
+        "events" or "evenements" => "/actualites/evenements",
+        "engagement" => "/engagement",
+        "membership" or "membre" => "/espace-membre",
+        "contact" => "/contact",
+        _ => "/"
+    };
 
     private async Task AuditAsync(Guid? userId, string action, string? entityId, object details, CancellationToken cancellationToken)
     {

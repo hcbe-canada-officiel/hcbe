@@ -4,7 +4,7 @@ Le lot IA comporte quatre capacités derrière des indicateurs de fonctionnalit�
 
 ## Principes de fonctionnement
 
-- L’assistant public répond uniquement à partir des services, documents, événements, annonces et associations actifs ou publiés dans l’application. Chaque réponse renvoie vers ses sources HCBE.
+- L’assistant public répond uniquement à partir des services, documents, événements, annonces, associations et contenus CMS publiés dans l’application. Un catalogue bilingue limité des capacités officielles de la plateforme couvre les questions générales lorsque la base ne contient pas encore de contenu. Chaque réponse renvoie vers ses sources HCBE.
 - Les outils administratifs produisent uniquement des brouillons ou recommandations. Une personne doit confirmer toute modification ou publication.
 - Le contenu fourni au modèle est considéré comme non fiable : les instructions trouvées dans une affiche, un document ou une demande ne sont jamais exécutées.
 - Les requêtes sont envoyées avec `store: false`. Les journaux internes conservent uniquement le type d’action, la longueur d’entrée, les sources ou entités utilisées et le niveau de confiance; ils ne conservent ni le texte saisi ni la réponse du modèle.
