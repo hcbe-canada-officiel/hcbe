@@ -187,6 +187,7 @@ export default {
   'admin.siteContent.carousel.description': 'Remplacez les quatre images affichées en arrière-plan de la page d’accueil. Chaque nouvelle image est publiée immédiatement.',
   'admin.siteContent.carousel.preview': 'Voir la page d’accueil',
   'admin.siteContent.carousel.hint': 'Privilégiez des photos horizontales nettes, sans texte intégré, afin de préserver la lisibilité sur téléphone et ordinateur.',
+  'admin.siteContent.carousel.dropImage': 'Déposez l’image ici',
   'admin.siteContent.carousel.slideLabel': 'Image {{number}}',
   'admin.siteContent.carousel.slideAlt': 'Aperçu de l’image {{number}} du carrousel',
   'admin.siteContent.carousel.position': 'Position {{number}} dans la rotation',

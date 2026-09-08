@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type DragEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, inputClasses } from '../../../components/ui';
 import { messages } from '../../../i18n/local';
@@ -21,6 +21,9 @@ interface CatalogEntry {
   fallbackFr: string;
   fallbackEn: string;
 }
+
+type WorkspaceFilter = 'all' | 'content' | 'media' | 'seo';
+type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
 
 const globalSections = new Set(['nav', 'footer', 'brand', 'theme', 'cookies', 'newsletter', 'common', 'lang', 'backToTop', 'notFound']);
 const pageLabels: Record<string, { fr: string; en: string; path: string }> = {
@@ -86,7 +89,13 @@ const extraCatalog: CatalogEntry[] = [
 const inferEntry = (key: string, fallbackFr: string, fallbackEn: string): CatalogEntry => {
   const segments = key.split('.');
   const root = segments[1] || 'global';
-  const page = globalSections.has(root) ? 'global' : root === 'actualites' ? 'news' : root;
+  const page = globalSections.has(root) || root === 'membershipVerification'
+    ? 'global'
+    : root === 'actualites'
+      ? 'news'
+      : root === 'volunteer'
+        ? 'engagement'
+        : root;
   const section = segments[page === 'global' ? 1 : 2] || 'general';
   const longForm = /description|subtitle|content|body|welcome|privacy|intro|mission|vision|message/i.test(key)
     || Math.max(fallbackFr.length, fallbackEn.length) > 120;
@@ -178,6 +187,11 @@ const copy = {
     pages: 'Pages', fallback: 'Les contenus intégrés restent disponibles comme valeurs de secours.',
     variables: 'Variables automatiques', preview: 'Aperçu avec des données exemples',
     templateError: 'Conservez toutes les variables automatiques dans les versions française et anglaise.',
+    workspace: 'Espace de travail', allTypes: 'Tout', previewDrafts: 'Prévisualiser les brouillons',
+    previewTitle: 'Aperçu de la page', previewDescription: 'Cette vue privée utilise les brouillons enregistrés, sans modifier le site public.',
+    desktop: 'Ordinateur', tablet: 'Tablette', mobile: 'Téléphone', refresh: 'Actualiser', close: 'Fermer',
+    savePreview: 'Enregistrer et prévisualiser', dropImage: 'Déposez une image ici', browseImage: 'ou choisissez un fichier',
+    imageFormats: 'JPG, PNG, WebP ou GIF · 10 Mo maximum', invalidImage: 'Choisissez une image JPG, PNG, WebP ou GIF de moins de 10 Mo.',
   },
   en: {
     eyebrow: 'Publishing studio', title: 'Control the entire public website',
@@ -195,6 +209,11 @@ const copy = {
     pages: 'Pages', fallback: 'Built-in content remains available as a resilient fallback.',
     variables: 'Automatic variables', preview: 'Preview with sample data',
     templateError: 'Keep every automatic variable in both the French and English versions.',
+    workspace: 'Workspace', allTypes: 'All', previewDrafts: 'Preview drafts',
+    previewTitle: 'Page preview', previewDescription: 'This private view uses saved drafts without changing the public website.',
+    desktop: 'Desktop', tablet: 'Tablet', mobile: 'Mobile', refresh: 'Refresh', close: 'Close',
+    savePreview: 'Save and preview', dropImage: 'Drop an image here', browseImage: 'or choose a file',
+    imageFormats: 'JPG, PNG, WebP or GIF · 10 MB maximum', invalidImage: 'Choose a JPG, PNG, WebP or GIF image under 10 MB.',
   },
 };
 
@@ -203,8 +222,10 @@ export const CmsContentStudio = () => {
   const c = i18n.language.startsWith('en') ? copy.en : copy.fr;
   const english = i18n.language.startsWith('en');
   const [items, setItems] = useState<CmsContentItemDto[]>([]);
-  const [selectedKey, setSelectedKey] = useState(catalog[0]?.key || '');
-  const [page, setPage] = useState('all');
+  const firstHomeEntry = catalog.find((entry) => entry.page === 'home') || catalog[0];
+  const [selectedKey, setSelectedKey] = useState(firstHomeEntry?.key || '');
+  const [page, setPage] = useState('home');
+  const [workspaceFilter, setWorkspaceFilter] = useState<WorkspaceFilter>('all');
   const [search, setSearch] = useState('');
   const [valueFr, setValueFr] = useState('');
   const [valueEn, setValueEn] = useState('');
@@ -214,6 +235,10 @@ export const CmsContentStudio = () => {
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
+  const [dragging, setDragging] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
+  const [previewRefresh, setPreviewRefresh] = useState(0);
 
   const load = async () => {
     setLoading(true);
@@ -248,19 +273,28 @@ export const CmsContentStudio = () => {
     const query = search.trim().toLowerCase();
     return catalog.filter((entry) =>
       (page === 'all' || entry.page === page)
+      && (workspaceFilter === 'all'
+        || (workspaceFilter === 'content' && entry.contentType !== 'image' && entry.contentType !== 'seo')
+        || (workspaceFilter === 'media' && entry.contentType === 'image')
+        || (workspaceFilter === 'seo' && entry.contentType === 'seo'))
       && (!query || `${entry.key} ${entry.label} ${entry.labelEn || ''} ${entry.fallbackFr} ${entry.fallbackEn} ${readableEntryLabel(entry, itemByKey, english)}`.toLowerCase().includes(query)));
-  }, [english, itemByKey, page, search]);
+  }, [english, itemByKey, page, search, workspaceFilter]);
   const pendingCount = items.filter((item) => item.hasUnpublishedChanges).length;
   const publishedCount = items.filter((item) => item.isPublished).length;
+  const selectPage = (nextPage: string) => {
+    setPage(nextPage);
+    const firstEntry = nextPage === 'all' ? catalog[0] : catalog.find((entry) => entry.page === nextPage);
+    if (firstEntry) setSelectedKey(firstEntry.key);
+  };
 
   const save = async (publish: boolean, schedule = false) => {
-    if (!selected) return;
+    if (!selected) return false;
     const expectedVariables = new Set([...templateVariables(selected.fallbackFr), ...templateVariables(selected.fallbackEn)]);
     const frenchVariables = new Set(templateVariables(valueFr));
     const englishVariables = new Set(templateVariables(valueEn));
     if ([...expectedVariables].some((variable) => !frenchVariables.has(variable) || !englishVariables.has(variable))) {
       setNotice(c.templateError);
-      return;
+      return false;
     }
     setBusy(true); setNotice('');
     const request: UpsertCmsContentRequest = {
@@ -283,9 +317,12 @@ export const CmsContentStudio = () => {
           const history = await siteContentApi.getCmsRevisions(response.data.id);
           if (history.success && history.data) setRevisions(history.data);
         }
-      } else setNotice(c.error);
+        return true;
+      }
+      setNotice(c.error);
     } catch { setNotice(c.error); }
     finally { setBusy(false); }
+    return false;
   };
 
   const publishAll = async () => {
@@ -300,6 +337,10 @@ export const CmsContentStudio = () => {
 
   const upload = async (file?: File) => {
     if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type) || file.size > 10 * 1024 * 1024) {
+      setNotice(c.invalidImage);
+      return;
+    }
     setUploading(true); setNotice('');
     try {
       const response = await siteContentApi.uploadCmsMedia(file);
@@ -310,6 +351,12 @@ export const CmsContentStudio = () => {
     } catch { setNotice(c.error); }
     finally { setUploading(false); }
   };
+
+  const previewPage = page === 'all' ? selected?.page || 'home' : page;
+  const previewPath = pageLabels[previewPage]?.path || '/';
+  const previewSrc = `${previewPath}${previewPath.includes('?') ? '&' : '?'}cmsPreview=1&cmsPreviewRefresh=${previewRefresh}`;
+  const openPreview = () => { setPreviewRefresh((value) => value + 1); setPreviewOpen(true); };
+  const saveAndPreview = async () => { if (await save(false)) openPreview(); };
 
   const rollback = async (version: number) => {
     if (!stored) return;
@@ -352,6 +399,9 @@ export const CmsContentStudio = () => {
             <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[.12em] text-emerald-100">
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />{c.status}
             </span>
+            <Button type="button" variant="secondary" onClick={openPreview}>
+              <i className="ri-layout-4-line" /> {c.previewDrafts}
+            </Button>
             <Button type="button" variant="primary" disabled={busy || pendingCount === 0} onClick={() => void publishAll()}>
               <i className="ri-broadcast-line" /> {c.publishAll}{pendingCount > 0 ? ` (${pendingCount})` : ''}
             </Button>
@@ -370,8 +420,8 @@ export const CmsContentStudio = () => {
         <aside className="border-b border-line bg-surface-container/45 p-4 xl:border-b-0 xl:border-r">
           <p className="mb-3 px-2 text-[9px] font-bold uppercase tracking-[.17em] text-ink-variant">{c.pages}</p>
           <div className="space-y-1">
-            <PageButton active={page === 'all'} label={c.all} count={catalog.length} onClick={() => setPage('all')} />
-            {pages.map((pageName) => <PageButton key={pageName} active={page === pageName} label={english ? pageLabels[pageName]?.en || pageName : pageLabels[pageName]?.fr || pageName} count={catalog.filter((entry) => entry.page === pageName).length} onClick={() => setPage(pageName)} />)}
+            <PageButton active={page === 'all'} label={c.all} count={catalog.length} onClick={() => selectPage('all')} />
+            {pages.map((pageName) => <PageButton key={pageName} active={page === pageName} label={english ? pageLabels[pageName]?.en || pageName : pageLabels[pageName]?.fr || pageName} count={catalog.filter((entry) => entry.page === pageName).length} onClick={() => selectPage(pageName)} />)}
           </div>
           <div className="mt-6 rounded-xl border border-line bg-surface p-3 text-xs leading-5 text-ink-variant">
             <i className="ri-shield-check-line mr-2 text-green" />{c.fallback}
@@ -379,7 +429,19 @@ export const CmsContentStudio = () => {
         </aside>
 
         <div className="border-b border-line xl:border-b-0 xl:border-r">
-          <div className="sticky top-0 z-10 border-b border-line bg-surface/95 p-4 backdrop-blur">
+          <div className="sticky top-0 z-10 space-y-3 border-b border-line bg-surface/95 p-4 backdrop-blur">
+            <div className="grid grid-cols-4 gap-1 rounded-xl border border-line bg-surface-container p-1" aria-label={c.workspace}>
+              {([
+                ['all', 'ri-layout-grid-line', c.allTypes],
+                ['content', 'ri-text', c.content],
+                ['media', 'ri-image-line', c.media],
+                ['seo', 'ri-search-eye-line', c.seo],
+              ] as const).map(([filter, icon, label]) => (
+                <button key={filter} type="button" onClick={() => setWorkspaceFilter(filter)} className={`flex min-h-9 items-center justify-center gap-1 rounded-lg px-2 text-[9px] font-bold uppercase tracking-[.08em] transition ${workspaceFilter === filter ? 'bg-surface text-green shadow-sm' : 'text-ink-variant hover:text-green'}`} aria-pressed={workspaceFilter === filter} title={label}>
+                  <i className={icon} aria-hidden="true" /><span className="hidden sm:inline xl:hidden 2xl:inline">{label}</span>
+                </button>
+              ))}
+            </div>
             <label className="relative block"><i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-variant" /><input className={`${inputClasses} pl-10`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={c.search} /></label>
           </div>
           <div className="max-h-[720px] overflow-y-auto">
@@ -402,9 +464,17 @@ export const CmsContentStudio = () => {
               <a href={pageLabels[selected.page]?.path || '/'} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center gap-2 rounded-full border border-green/25 px-4 text-[10px] font-bold uppercase tracking-[.1em] text-green hover:bg-green hover:text-white">{c.openPage}<i className="ri-external-link-line" /></a>
             </div>
 
-            {selected.contentType === 'image' && <div className="mt-5 overflow-hidden rounded-xl border border-line bg-canvas p-3">
-              {valueFr ? <img src={resolveMediaUrl(valueFr)} alt="" className="h-40 w-full rounded-lg object-cover" /> : <div className="flex h-32 items-center justify-center text-sm text-ink-variant"><i className="ri-image-add-line mr-2 text-xl" />{c.upload}</div>}
-              <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-green px-4 py-2 text-[10px] font-bold uppercase tracking-[.1em] text-white"><i className={uploading ? 'ri-loader-4-line animate-spin' : 'ri-upload-cloud-2-line'} />{uploading ? c.uploading : c.upload}<input type="file" accept="image/*" className="sr-only" disabled={uploading} onChange={(event) => void upload(event.target.files?.[0])} /></label>
+            {selected.contentType === 'image' && <div
+              className={`mt-5 overflow-hidden rounded-2xl border-2 border-dashed p-3 transition ${dragging ? 'border-gold bg-gold/[.08]' : 'border-line bg-canvas'}`}
+              onDragOver={(event: DragEvent<HTMLDivElement>) => { event.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(event: DragEvent<HTMLDivElement>) => { event.preventDefault(); setDragging(false); void upload(event.dataTransfer.files?.[0]); }}
+            >
+              {valueFr ? <img src={resolveMediaUrl(valueFr)} alt="" className="h-48 w-full rounded-xl object-cover" /> : <div className="flex h-40 items-center justify-center text-sm text-ink-variant"><i className="ri-image-add-line mr-2 text-xl" />{c.dropImage}</div>}
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <div><strong className="block text-xs text-green-deep">{c.dropImage}</strong><span className="text-[10px] text-ink-variant">{c.imageFormats}</span></div>
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-green px-4 py-2 text-[10px] font-bold uppercase tracking-[.1em] text-white"><i className={uploading ? 'ri-loader-4-line animate-spin' : 'ri-upload-cloud-2-line'} />{uploading ? c.uploading : c.browseImage}<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" disabled={uploading} onChange={(event) => void upload(event.target.files?.[0])} /></label>
+              </div>
             </div>}
 
             <div className="mt-6 grid gap-5">
@@ -419,6 +489,7 @@ export const CmsContentStudio = () => {
             <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-line pt-5">
               {stored && <button type="button" disabled={busy} onClick={() => void resetOverride()} className="mr-auto inline-flex min-h-11 items-center gap-2 px-1 text-[10px] font-bold uppercase tracking-[.1em] text-error disabled:opacity-40"><i className="ri-reset-left-line" />{c.reset}</button>}
               <Button type="button" variant="secondary" disabled={busy} onClick={() => void save(false)}><i className="ri-draft-line" /> {c.saveDraft}</Button>
+              <Button type="button" variant="secondary" disabled={busy} onClick={() => void saveAndPreview()}><i className="ri-eye-line" /> {c.savePreview}</Button>
               <Button type="button" variant="secondary" disabled={busy || !scheduledAt} onClick={() => void save(false, true)}><i className="ri-time-line" /> {c.scheduleAction}</Button>
               <Button type="button" variant="primary" disabled={busy} onClick={() => void save(true)}><i className="ri-broadcast-line" /> {c.savePublish}</Button>
             </div>
@@ -427,6 +498,27 @@ export const CmsContentStudio = () => {
           </>}
         </div>
       </div>
+      {previewOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-green-deep/80 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-labelledby="cms-preview-title">
+          <div className="flex h-[min(900px,94vh)] w-full max-w-[1500px] flex-col overflow-hidden rounded-[24px] border border-white/15 bg-surface shadow-2xl">
+            <header className="flex flex-col gap-4 border-b border-line bg-surface px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-[.18em] text-red-link">{english ? pageLabels[previewPage]?.en : pageLabels[previewPage]?.fr}</p><h3 id="cms-preview-title" className="font-display text-2xl font-bold text-green-deep">{c.previewTitle}</h3><p className="mt-1 text-xs text-ink-variant">{c.previewDescription}</p></div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex rounded-full border border-line bg-surface-container p-1">
+                  {([['desktop', 'ri-macbook-line', c.desktop], ['tablet', 'ri-tablet-line', c.tablet], ['mobile', 'ri-smartphone-line', c.mobile]] as const).map(([device, icon, label]) => <button key={device} type="button" onClick={() => setPreviewDevice(device)} className={`flex h-9 items-center gap-2 rounded-full px-3 text-[9px] font-bold uppercase tracking-[.08em] ${previewDevice === device ? 'bg-green text-white shadow-sm' : 'text-ink-variant'}`} aria-pressed={previewDevice === device} title={label}><i className={icon} /><span className="hidden sm:inline">{label}</span></button>)}
+                </div>
+                <button type="button" onClick={() => setPreviewRefresh((value) => value + 1)} className="flex h-10 w-10 items-center justify-center rounded-full border border-line text-green hover:bg-surface-container" aria-label={c.refresh} title={c.refresh}><i className="ri-refresh-line" /></button>
+                <button type="button" onClick={() => setPreviewOpen(false)} className="flex h-10 w-10 items-center justify-center rounded-full bg-green-deep text-white" aria-label={c.close} title={c.close}><i className="ri-close-line" /></button>
+              </div>
+            </header>
+            <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto bg-[#dfe5e0] p-3 sm:p-5">
+              <div className={`h-full overflow-hidden bg-white shadow-2xl transition-[width,border-radius] duration-300 ${previewDevice === 'desktop' ? 'w-full rounded-xl' : previewDevice === 'tablet' ? 'w-[820px] max-w-full rounded-[24px]' : 'w-[390px] max-w-full rounded-[30px]'}`}>
+                <iframe key={`${previewSrc}-${previewRefresh}`} src={previewSrc} title={c.previewTitle} className="h-full w-full border-0 bg-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

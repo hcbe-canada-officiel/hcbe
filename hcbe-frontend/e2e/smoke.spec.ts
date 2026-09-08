@@ -11,6 +11,12 @@ test('public home page renders the application shell', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /votre communauté burkinabè/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /toute votre communauté, au même endroit/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /événements et billetterie/i })).toBeVisible();
+  const partnersHeading = page.getByRole('heading', { name: /partenaires/i }).first();
+  await expect(partnersHeading).toBeVisible();
+  await expect(page.locator('.marquee-track > *')).not.toHaveCount(0);
+  const heroBottom = await page.locator('main > *').first().boundingBox();
+  const partnersTop = await partnersHeading.boundingBox();
+  expect(partnersTop?.y).toBeLessThan((heroBottom?.height || 900) + 900);
   await expect(page.getByRole('heading', { name: /entreprises qui font vivre notre communauté/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /faire connaître mon activité/i }).first()).toBeVisible();
   await expect(page.getByTestId('public-page-help-button')).toHaveCount(0);
@@ -570,6 +576,14 @@ test('every administrator workspace remains usable on mobile and tablet in dark 
       await expect(carouselManager).toBeVisible();
       await expect(carouselManager.locator('article')).toHaveCount(4);
       await expect(carouselManager.locator('input[type="file"]')).toHaveCount(4);
+      await expect(page.getByRole('button', { name: /preview drafts|prévisualiser les brouillons/i })).toBeVisible();
+      await expect(page.getByRole('button', { name: /media|médias/i })).toBeVisible();
+      await page.getByRole('button', { name: /preview drafts|prévisualiser les brouillons/i }).click();
+      const previewDialog = page.getByRole('dialog', { name: /page preview|aperçu de la page/i });
+      await expect(previewDialog).toBeVisible();
+      await expect(previewDialog.locator('iframe')).toHaveAttribute('src', /cmsPreview=1/);
+      await previewDialog.getByRole('button', { name: /close|fermer/i }).click();
+      await expect(previewDialog).toBeHidden();
     }
   }
 });

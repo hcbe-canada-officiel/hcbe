@@ -187,6 +187,7 @@ export default {
   'admin.siteContent.carousel.description': 'Replace the four background images displayed on the homepage. Each new image is published immediately.',
   'admin.siteContent.carousel.preview': 'View homepage',
   'admin.siteContent.carousel.hint': 'Use sharp horizontal photos without embedded text to preserve readability on phones and computers.',
+  'admin.siteContent.carousel.dropImage': 'Drop the image here',
   'admin.siteContent.carousel.slideLabel': 'Image {{number}}',
   'admin.siteContent.carousel.slideAlt': 'Preview of carousel image {{number}}',
   'admin.siteContent.carousel.position': 'Position {{number}} in the rotation',

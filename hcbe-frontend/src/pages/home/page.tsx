@@ -17,6 +17,9 @@ const HomePage = () => {
       <Navbar />
       <main>
         <HeroSection />
+        <Reveal>
+          <PartnersMarquee />
+        </Reveal>
         <MissionVisionSection />
         <Reveal>
           <CommunitySpotlightSection />
@@ -29,9 +32,6 @@ const HomePage = () => {
         </Reveal>
         <Reveal>
           <ZonesSection />
-        </Reveal>
-        <Reveal>
-          <PartnersMarquee />
         </Reveal>
         <Reveal>
           <DocumentsSection />

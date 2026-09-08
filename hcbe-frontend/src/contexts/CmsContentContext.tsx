@@ -58,6 +58,21 @@ export const CmsContentProvider = ({ children }: { children: ReactNode }) => {
 
   const refresh = useCallback(async () => {
     try {
+      const preview = new URLSearchParams(window.location.search).get('cmsPreview') === '1';
+      if (preview) {
+        const draftResponse = await siteContentApi.getCmsItems();
+        if (draftResponse.success && draftResponse.data) {
+          applyBundle(draftResponse.data.map((item) => ({
+            key: item.key,
+            contentType: item.contentType,
+            valueFr: item.draftValueFr ?? item.publishedValueFr,
+            valueEn: item.draftValueEn ?? item.publishedValueEn,
+            version: item.version,
+          })));
+          setVersion(Math.max(0, ...draftResponse.data.map((item) => item.version)));
+          return;
+        }
+      }
       const response = await siteContentApi.getPublishedCms();
       if (response.success && response.data) {
         applyBundle(response.data.items);

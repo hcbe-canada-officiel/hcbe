@@ -14,6 +14,7 @@ import PwaExperience from "./components/feature/PwaExperience";
 import PublicPageHelp from "./components/feature/PublicPageHelp";
 import CommunityAiAssistant from "./components/feature/CommunityAiAssistant";
 import SeoManager from "./components/SeoManager";
+import CmsPreviewBanner from "./components/feature/CmsPreviewBanner";
 
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
               <AccessibilityNavigation />
               <ScrollToTop />
               <AppRoutes />
+              <CmsPreviewBanner />
               <PublicPageHelp />
               <CommunityAiAssistant />
               <BackToTopButton />

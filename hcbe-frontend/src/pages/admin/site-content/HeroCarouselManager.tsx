@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type DragEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import heroPhoto from '../../../assets/hero/hero-1.jpg';
 import heroAssemblee from '../../../assets/hero/hero-2-assemblee.jpg';
@@ -23,6 +23,7 @@ export const HeroCarouselManager = () => {
   const [items, setItems] = useState<CmsContentItemDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyKey, setBusyKey] = useState('');
+  const [dragKey, setDragKey] = useState('');
   const [notice, setNotice] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
 
   const load = async () => {
@@ -131,7 +132,13 @@ export const HeroCarouselManager = () => {
             const image = stored?.publishedValueFr || stored?.publishedValueEn || slide.fallback;
             const isBusy = busyKey === slide.key;
             return (
-              <article key={slide.key} className="group overflow-hidden rounded-[18px] border border-line bg-surface shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-green/35 hover:shadow-lg">
+              <article
+                key={slide.key}
+                className={`group overflow-hidden rounded-[18px] border-2 bg-surface shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg ${dragKey === slide.key ? 'border-gold shadow-lg' : 'border-line hover:border-green/35'}`}
+                onDragOver={(event: DragEvent<HTMLElement>) => { event.preventDefault(); if (!busyKey) setDragKey(slide.key); }}
+                onDragLeave={() => setDragKey('')}
+                onDrop={(event: DragEvent<HTMLElement>) => { event.preventDefault(); setDragKey(''); if (!busyKey) void replace(slide.key, event.dataTransfer.files?.[0]); }}
+              >
                 <div className="relative aspect-[16/10] overflow-hidden bg-green-deep">
                   <img src={resolveMediaUrl(image)} alt={t('admin.siteContent.carousel.slideAlt', { number: index + 1 })} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]" />
                   <div className="absolute inset-0 bg-gradient-to-t from-green-deep/80 via-transparent to-transparent" />
@@ -139,6 +146,7 @@ export const HeroCarouselManager = () => {
                   <span className={`absolute bottom-3 left-3 rounded-full border px-2.5 py-1 text-[8px] font-bold uppercase tracking-[.12em] backdrop-blur ${stored?.isPublished ? 'border-emerald-200/25 bg-emerald-300/15 text-emerald-50' : 'border-white/20 bg-black/25 text-white'}`}>
                     {stored?.isPublished ? t('admin.siteContent.carousel.custom') : t('admin.siteContent.carousel.builtIn')}
                   </span>
+                  {dragKey === slide.key && <div className="absolute inset-0 flex items-center justify-center bg-green-deep/80 text-center text-xs font-bold uppercase tracking-[.12em] text-white"><span><i className="ri-upload-cloud-2-line mb-2 block text-3xl text-gold" />{t('admin.siteContent.carousel.dropImage')}</span></div>}
                 </div>
                 <div className="p-4">
                   <h3 className="font-display text-lg font-bold text-green-deep">{t('admin.siteContent.carousel.slideLabel', { number: index + 1 })}</h3>
