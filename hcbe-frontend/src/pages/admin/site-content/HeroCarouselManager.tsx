@@ -129,7 +129,8 @@ export const HeroCarouselManager = () => {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" data-testid="hero-carousel-manager">
           {slides.map((slide, index) => {
             const stored = byKey[slide.key];
-            const image = stored?.publishedValueFr || stored?.publishedValueEn || slide.fallback;
+            const uploadedImage = stored?.publishedValueFr || stored?.publishedValueEn;
+            const image = uploadedImage ? resolveMediaUrl(uploadedImage) : slide.fallback;
             const isBusy = busyKey === slide.key;
             return (
               <article
@@ -140,7 +141,15 @@ export const HeroCarouselManager = () => {
                 onDrop={(event: DragEvent<HTMLElement>) => { event.preventDefault(); setDragKey(''); if (!busyKey) void replace(slide.key, event.dataTransfer.files?.[0]); }}
               >
                 <div className="relative aspect-[16/10] overflow-hidden bg-green-deep">
-                  <img src={resolveMediaUrl(image)} alt={t('admin.siteContent.carousel.slideAlt', { number: index + 1 })} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]" />
+                  <img
+                    src={image}
+                    alt={t('admin.siteContent.carousel.slideAlt', { number: index + 1 })}
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = slide.fallback;
+                    }}
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-green-deep/80 via-transparent to-transparent" />
                   <span className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-green-deep/75 font-display text-lg font-bold text-white backdrop-blur">{String(index + 1).padStart(2, '0')}</span>
                   <span className={`absolute bottom-3 left-3 rounded-full border px-2.5 py-1 text-[8px] font-bold uppercase tracking-[.12em] backdrop-blur ${stored?.isPublished ? 'border-emerald-200/25 bg-emerald-300/15 text-emerald-50' : 'border-white/20 bg-black/25 text-white'}`}>

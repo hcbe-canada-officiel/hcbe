@@ -576,6 +576,7 @@ test('every administrator workspace remains usable on mobile and tablet in dark 
       await expect(carouselManager).toBeVisible();
       await expect(carouselManager.locator('article')).toHaveCount(4);
       await expect(carouselManager.locator('input[type="file"]')).toHaveCount(4);
+      await expect.poll(() => carouselManager.locator('img').evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0))).toBeTruthy();
       await expect(page.getByRole('button', { name: /preview drafts|prévisualiser les brouillons/i })).toBeVisible();
       await expect(page.getByRole('button', { name: /media|médias/i })).toBeVisible();
       await page.getByRole('button', { name: /preview drafts|prévisualiser les brouillons/i }).click();
