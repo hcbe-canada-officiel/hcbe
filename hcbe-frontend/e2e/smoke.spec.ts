@@ -181,6 +181,38 @@ test('authenticated member receives an accessible notification bell on desktop a
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
+test('an administrator refresh cookie restores access from the login page', async ({ page }) => {
+  const admin = {
+    id: '61616161-6161-6161-6161-616161616161', memberId: '51515151-5151-5151-5151-515151515151',
+    email: 'admin@hcbe.invalid', firstName: 'Awa', lastName: 'Admin', isAdmin: true,
+    mustChangePassword: false, mfaEnabled: true,
+  };
+  await page.addInitScript(() => {
+    localStorage.removeItem('hcbe_token');
+    localStorage.removeItem('hcbe_user');
+  });
+  await page.route('**/api/auth/refresh', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ success: true, data: { token: 'restored-admin-token', user: admin } }),
+  }));
+  await page.route('**/api/auth/me', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ success: true, data: admin }),
+  }));
+  await page.route('**/api/admin/dashboard', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ success: true, data: {} }),
+  }));
+
+  await page.goto('/admin/login');
+  await expect(page).toHaveURL(/\/admin\/dashboard$/);
+  await expect(page.getByRole('heading', { name: /tableau de bord|dashboard/i }).first()).toBeVisible();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('hcbe_token'))).toBe('restored-admin-token');
+});
+
 test('PWA manifest, offline fallback and service worker are production-ready', async ({ page, request }) => {
   const manifestResponse = await request.get('/manifest.webmanifest');
   expect(manifestResponse.ok()).toBeTruthy();

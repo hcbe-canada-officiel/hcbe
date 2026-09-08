@@ -160,7 +160,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const token = localStorage.getItem('hcbe_token');
       if (!token) {
-        setIsLoading(false);
+        try {
+          const refreshed = await authApi.refresh();
+          if (refreshed.success && refreshed.data?.token && refreshed.data.user) {
+            storeSession(refreshed.data.token, refreshed.data.user);
+          } else {
+            localStorage.removeItem('hcbe_user');
+            setUser(null);
+          }
+        } catch {
+          localStorage.removeItem('hcbe_user');
+          setUser(null);
+        }
         return;
       }
 

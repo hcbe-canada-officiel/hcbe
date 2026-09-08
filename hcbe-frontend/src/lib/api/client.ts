@@ -75,8 +75,9 @@ export class ApiClient {
     const isLoginEndpoint =
       response.url.includes('/api/auth/login') ||
       response.url.includes('/api/auth/google/admin');
+    const isRefreshEndpoint = response.url.includes('/api/auth/refresh');
     
-    if (response.status === 401 && !isLoginEndpoint) {
+    if (response.status === 401 && !isLoginEndpoint && !isRefreshEndpoint) {
       // Unauthorized - clear token and redirect to login (but not for login endpoint itself)
       localStorage.removeItem('hcbe_token');
       localStorage.removeItem('hcbe_user');

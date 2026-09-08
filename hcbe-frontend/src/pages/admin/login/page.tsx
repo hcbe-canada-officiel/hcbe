@@ -45,11 +45,26 @@ export const AdminLoginPage = () => {
   const [mfaNotice, setMfaNotice] = useState('');
   const { t } = useTranslation();
 
-  const { login, googleAdminLogin, verifyMfa, resendMfaCode, logout } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    isAdmin,
+    isLoading: isAuthLoading,
+    login,
+    googleAdminLogin,
+    verifyMfa,
+    resendMfaCode,
+    logout,
+  } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/admin/dashboard';
+
+  useEffect(() => {
+    if (isAuthLoading || !isAuthenticated || !isAdmin) return;
+    navigate(user?.mustChangePassword ? '/admin/change-password' : from, { replace: true });
+  }, [from, isAdmin, isAuthenticated, isAuthLoading, navigate, user?.mustChangePassword]);
 
   const finishAdminLogin = () => {
     const storedUser = localStorage.getItem('hcbe_user');
