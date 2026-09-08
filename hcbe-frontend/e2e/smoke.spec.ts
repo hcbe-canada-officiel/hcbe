@@ -13,6 +13,7 @@ test('public home page renders the application shell', async ({ page }) => {
   await expect(page.getByRole('link', { name: /événements et billetterie/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /entreprises qui font vivre notre communauté/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /faire connaître mon activité/i }).first()).toBeVisible();
+  await expect(page.getByTestId('public-page-help-button')).toHaveCount(0);
 
   const contactCta = page.getByRole('link', { name: /écrire au hcbe|write to hcbe/i });
   await expect(contactCta).toBeVisible();
@@ -564,6 +565,12 @@ test('every administrator workspace remains usable on mobile and tablet in dark 
     await page.goto(route, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('main').first()).toBeVisible();
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+    if (route === '/admin/site-content') {
+      const carouselManager = page.getByTestId('hero-carousel-manager');
+      await expect(carouselManager).toBeVisible();
+      await expect(carouselManager.locator('article')).toHaveCount(4);
+      await expect(carouselManager.locator('input[type="file"]')).toHaveCount(4);
+    }
   }
 });
 

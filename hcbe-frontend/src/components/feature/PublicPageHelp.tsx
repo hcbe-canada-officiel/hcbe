@@ -203,7 +203,7 @@ const PublicPageHelp = () => {
     };
   }, [open]);
 
-  if (pathname.startsWith('/admin') || pathname.startsWith('/adhesion/verifier')) return null;
+  if (pathname === '/' || pathname.startsWith('/admin') || pathname.startsWith('/adhesion/verifier')) return null;
 
   const buttonLabel = locale === 'fr' ? 'Aide pour cette page' : 'Help for this page';
   const guideLabel = locale === 'fr' ? 'Guide de cette page' : 'Page guide';

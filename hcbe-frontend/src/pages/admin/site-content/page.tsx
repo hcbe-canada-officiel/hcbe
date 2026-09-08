@@ -6,6 +6,7 @@ import { Button, Field, inputClasses } from '../../../components/ui';
 import { siteContentApi } from '../../../lib/api/site-content';
 import type { FooterLinkDto, NavigationItemDto } from '../../../lib/api/types';
 import { CmsContentStudio } from './CmsContentStudio';
+import { HeroCarouselManager } from './HeroCarouselManager';
 
 const statisticDefaults: Record<string, string> = { provinces: '11', zones: '2', associations: '15', membership: 'free' };
 const blankNavigation = (): Omit<NavigationItemDto, 'id'> => ({ label: '', labelEn: '', url: '/', isActive: true, displayOrder: 0 });
@@ -75,6 +76,8 @@ const SiteContentPage = () => {
       <nav aria-label={t('admin.siteContent.collections')} className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">
         {collections.map((collection) => <Link key={collection.href} to={collection.href} className="group flex min-h-20 flex-col justify-between rounded-xl border border-line bg-surface px-3 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-green/35 hover:shadow-md"><i className={`${collection.icon} text-lg text-green`} aria-hidden="true" /><span className="mt-3 text-[10px] font-bold uppercase tracking-[.08em] text-ink-variant group-hover:text-green">{t(collection.labelKey)}</span></Link>)}
       </nav>
+
+      <HeroCarouselManager />
 
       <CmsContentStudio />
 
