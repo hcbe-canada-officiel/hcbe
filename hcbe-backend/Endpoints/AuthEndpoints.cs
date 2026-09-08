@@ -182,7 +182,7 @@ public static class AuthEndpoints
         })
         .WithName("RefreshSession")
         .AllowAnonymous()
-        .RequireRateLimiting("Authentication");
+        .RequireRateLimiting("SessionRefresh");
 
         group.MapPost("/logout", async (
             HttpContext context,

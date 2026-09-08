@@ -164,6 +164,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const token = localStorage.getItem('hcbe_token');
       if (!token) {
+        const isSessionEntryPoint =
+          window.location.pathname.startsWith('/admin') ||
+          window.location.pathname.startsWith('/espace-membre');
+        if (!isSessionEntryPoint) {
+          localStorage.removeItem('hcbe_user');
+          setUser(null);
+          return;
+        }
+
         try {
           const refreshed = await authApi.refresh();
           if (sessionRevisionRef.current !== sessionRevision) return;

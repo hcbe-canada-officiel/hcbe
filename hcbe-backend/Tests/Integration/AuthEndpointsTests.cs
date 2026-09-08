@@ -111,6 +111,37 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>, ID
     }
 
     [Fact]
+    public async Task AnonymousSessionRefreshes_DoNotConsumeTheLoginAttemptBudget()
+    {
+        var email = $"refresh-budget-{Guid.NewGuid()}@example.com";
+        const string password = "TestPassword123!";
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            context.Users.Add(new User
+            {
+                Email = email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                FirstName = "Session",
+                LastName = "Owner"
+            });
+            await context.SaveChangesAsync();
+        }
+
+        for (var attempt = 0; attempt < 9; attempt++)
+        {
+            var refreshResponse = await _client.PostAsync("/api/auth/refresh", content: null);
+            refreshResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        }
+
+        var loginResponse = await _client.PostAsJsonAsync(
+            "/api/auth/login",
+            new LoginRequest(email, password));
+
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task GoogleAdminLogin_WhenNotConfigured_ShouldReturnServiceUnavailable()
     {
         var response = await _client.PostAsJsonAsync(

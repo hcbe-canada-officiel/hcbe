@@ -293,6 +293,20 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0,
                 AutoReplenishment = true
             }));
+    options.AddPolicy("SessionRefresh", httpContext =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new SlidingWindowRateLimiterOptions
+            {
+                // Refresh tokens are high-entropy, rotating credentials. Keep their
+                // traffic separate so session restoration cannot consume the much
+                // stricter password/OTP brute-force budget.
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(5),
+                SegmentsPerWindow = 5,
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
     options.AddPolicy("PrivacyExport", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             httpContext.GetUserId()?.ToString() ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
