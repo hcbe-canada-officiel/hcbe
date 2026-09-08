@@ -37,8 +37,8 @@ const CommunitySpotlightSection = () => {
             <div className="grid items-center gap-6 rounded-[26px] border border-dashed border-white/25 bg-white/[.07] p-6 text-white backdrop-blur-sm sm:p-8 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
               <span className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-gold/30 bg-gold/10 text-2xl text-gold" aria-hidden="true"><i className="ri-advertisement-line" /></span>
               <div>
-                <h3 className="font-display text-2xl font-bold">{t('public.home.advertising.empty.title')}</h3>
-                <p className="mt-2 text-sm leading-6 text-white/65">{t('public.home.advertising.empty.description')}</p>
+                <h3 className="font-display text-2xl font-bold text-white">{t('public.home.advertising.empty.title')}</h3>
+                <p className="mt-2 text-sm leading-6 text-white/80">{t('public.home.advertising.empty.description')}</p>
               </div>
               <Button to="/contact?subject=advertising" variant="primary" className="w-full lg:w-auto">{t('public.home.advertising.empty.cta')}</Button>
             </div>

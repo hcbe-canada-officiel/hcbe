@@ -4,6 +4,7 @@ export default {
   'public.lang': 'Langue',
   'public.backToTop': 'Retour en haut',
   'public.nav.home': 'Accueil',
+  'public.nav.back': 'Retour à la page précédente',
   'public.nav.services': 'Services',
   'public.nav.news': 'Actualités',
   'public.nav.engagement': 'Engagement',

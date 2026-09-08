@@ -4,6 +4,7 @@ export default {
   'public.lang': 'Language',
   'public.backToTop': 'Back to top',
   'public.nav.home': 'Home',
+  'public.nav.back': 'Back to the previous page',
   'public.nav.services': 'Services',
   'public.nav.news': 'News',
   'public.nav.engagement': 'Engagement',

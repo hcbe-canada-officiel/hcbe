@@ -107,6 +107,28 @@ test('community advertising is clearly identified, bilingual and responsive', as
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
+test('empty advertising placement keeps its callout readable in both languages', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('i18nextLng', 'fr'));
+  await page.route('**/api/community-marketplace/ads?*', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ success: true, data: [] }),
+  }));
+
+  await page.goto('/');
+  const frenchTitle = page.getByRole('heading', { name: 'Votre entreprise pourrait être ici.' });
+  await expect(frenchTitle).toBeVisible();
+  await expect(frenchTitle).toHaveCSS('color', 'rgb(255, 255, 255)');
+
+  await page.getByRole('button', { name: 'English' }).click();
+  const englishTitle = page.getByRole('heading', { name: 'Your business could be featured here.' });
+  await expect(englishTitle).toBeVisible();
+  await expect(englishTitle).toHaveCSS('color', 'rgb(255, 255, 255)');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});
+
 test('public page help explains the current feature in both languages', async ({ page }) => {
   await page.goto('/services');
   const helpButton = page.getByRole('button', { name: /aide pour cette page|help for this page/i });
@@ -195,9 +217,18 @@ test('installed mobile app keeps the admin sign-in accessible', async ({ browser
   });
   const page = await context.newPage();
   await page.goto('/');
+  await expect(page.getByRole('button', { name: /retour à la page précédente/i })).toHaveCount(0);
   await page.getByRole('button', { name: /ouvrir le menu/i }).click();
-  await expect(page.getByRole('link', { name: /connexion admin/i })).toHaveAttribute('href', '/admin/login');
+  const installedMenu = page.getByRole('dialog', { name: /ouvrir le menu/i });
+  await expect(installedMenu.getByRole('link', { name: /connexion admin/i })).toHaveAttribute('href', '/admin/login');
   await expect(page.getByRole('button', { name: /installer l.application/i })).toHaveCount(0);
+  await installedMenu.getByRole('link', { name: /contact$/i }).click();
+  await expect(page).toHaveURL(/\/contact$/);
+
+  const appBack = page.getByRole('button', { name: /retour à la page précédente/i });
+  await expect(appBack).toBeVisible();
+  await appBack.click();
+  await expect(page).toHaveURL(/\/$/);
   await context.close();
 });
 

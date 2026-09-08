@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HcbeLogoMark } from '../brand/HcbeLogo';
@@ -22,6 +22,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { user, isAdmin } = useAuth();
   const [cmsNavigation, setCmsNavigation] = useState<NavigationItemDto[]>([]);
@@ -136,6 +137,15 @@ const Navbar = () => {
   const memberCtaLabel = hasMemberSession ? t('public.nav.memberSpace') : t('public.nav.memberAccess');
   const adminDestination = isAdmin ? '/admin/dashboard' : '/admin/login';
   const adminCtaLabel = isAdmin ? t('public.nav.adminSpace') : t('public.nav.adminAccess');
+  const showInstalledAppBack = isInstalledApp && location.pathname !== '/';
+  const goBackInInstalledApp = () => {
+    const historyIndex = Number(window.history.state?.idx ?? 0);
+    if (historyIndex > 0) {
+      navigate(-1);
+      return;
+    }
+    navigate('/', { replace: true });
+  };
   const openMobileMenu = () => {
     const activeParent = mainLinks.find((link) => link.dropdown && location.pathname.startsWith(link.path));
     setOpenDropdown(activeParent?.path || null);
@@ -320,9 +330,22 @@ const Navbar = () => {
     <>
     <header className="sticky top-0 z-50 border-b border-line/50 bg-surface/90 shadow-[0_8px_30px_rgba(0,59,27,.055)] backdrop-blur-xl">
       <div className="mx-auto flex h-[76px] w-full max-w-[1440px] items-center justify-between px-margin-mobile md:px-margin-desktop">
-        <Link to="/" className="flex shrink-0 items-center gap-3">
-          <HcbeLogoMark size="md" />
-        </Link>
+        <div className="flex min-w-0 items-center gap-2.5">
+          {showInstalledAppBack && (
+            <button
+              type="button"
+              onClick={goBackInInstalledApp}
+              aria-label={t('public.nav.back')}
+              title={t('public.nav.back')}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-green-deep shadow-[0_5px_18px_rgba(0,59,27,.08)] transition-all hover:-translate-x-0.5 hover:border-green/40 hover:bg-green/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green xl:hidden"
+            >
+              <i className="ri-arrow-left-line text-xl" aria-hidden="true" />
+            </button>
+          )}
+          <Link to="/" className="flex min-w-0 shrink-0 items-center">
+            <HcbeLogoMark size="md" className="max-[380px]:scale-[.9] max-[380px]:origin-left" />
+          </Link>
+        </div>
 
         <div className="hidden flex-1 justify-center xl:flex">
           <nav className="flex items-center xl:space-x-7">
