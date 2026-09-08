@@ -277,16 +277,25 @@ test('every public workspace exposes a single skip-link target', async ({ page }
   }
 });
 
-test('public services and events pages load against the real API', async ({ page, request }) => {
+test('public services, events and souvenir albums load against the real API', async ({ page, request }) => {
   const apiUrl = process.env.E2E_API_URL ?? 'http://127.0.0.1:8080';
   const readiness = await request.get(`${apiUrl}/health/ready`);
   expect(readiness.ok()).toBeTruthy();
 
-  for (const path of ['/services', '/actualites/evenements']) {
+  for (const path of ['/services', '/actualites/evenements', '/actualites/souvenirs']) {
     await page.goto(path);
     await expect(page.locator('#root')).toBeVisible();
     await expect(page.locator('body')).not.toHaveText(/unexpected application error/i);
   }
+
+  const albums = page.locator('main a[href^="/actualites/evenements/"]');
+  await expect.poll(() => albums.count()).toBeGreaterThanOrEqual(3);
+  await expect.poll(() => albums.locator('img').evaluateAll((images) =>
+    images.every((image) => image.complete && image.naturalWidth > 0),
+  )).toBeTruthy();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
 test('public and authentication routes render cleanly in French and English', async ({ page }) => {

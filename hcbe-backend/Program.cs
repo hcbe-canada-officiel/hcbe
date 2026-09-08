@@ -1252,6 +1252,7 @@ using (var scope = app.Services.CreateScope())
         DbSeeder.SeedStatisticsIfEmpty(context);
         DbSeeder.SeedPartnersIfEmpty(context);
         DbSeeder.SeedCommunityMemberships(context);
+        DbSeeder.SeedOfficialEventMemories(context);
     }
     catch { }
 }

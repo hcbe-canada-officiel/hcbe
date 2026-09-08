@@ -863,6 +863,126 @@ public static class DbSeeder
         }
     }
 
+    public static void SeedOfficialEventMemories(ApplicationDbContext context)
+    {
+        var events = new[]
+        {
+            new Event
+            {
+                Id = Guid.Parse("9ed263c4-0ec5-4d2d-96b7-47f8d4e8f101"),
+                Title = "Rencontre communautaire du HCBE Canada",
+                TitleEn = "HCBE Canada community gathering",
+                Description = "Un moment de rencontre, d’écoute et de mobilisation réunissant des membres de la diaspora burkinabè autour du HCBE Canada. Photos publiées par la page Facebook officielle du HCBE Canada le 29 septembre 2025.",
+                DescriptionEn = "A gathering focused on listening, connection and community mobilization, bringing together members of the Burkinabè diaspora and HCBE Canada. Photos published by HCBE Canada's official Facebook page on September 29, 2025.",
+                Date = new DateTime(2025, 9, 29, 18, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 9, 29, 21, 0, 0, DateTimeKind.Utc),
+                Location = "Canada",
+                LocationEn = "Canada",
+                Type = "En présentiel",
+                Format = "InPerson",
+                Zone = "National",
+                RegistrationMode = "Disabled",
+                AllowWaitlist = false,
+                ImageUrl = "/seed-media/events/rencontre-hcbe-groupe.jpg",
+                Status = "Completed",
+                Media = new List<EventMedia>
+                {
+                    CreateSeedEventImage("8c29e71b-9db8-4df3-8397-1d3b0a8af101", "/seed-media/events/rencontre-hcbe-groupe.jpg", "Photo de groupe de la rencontre communautaire", "Group photo from the community gathering", 0),
+                    CreateSeedEventImage("8c29e71b-9db8-4df3-8397-1d3b0a8af102", "/seed-media/events/rencontre-hcbe-participants-1.jpg", "Des participantes et participants réunis pour les échanges", "Community members gathered for the discussion", 1),
+                    CreateSeedEventImage("8c29e71b-9db8-4df3-8397-1d3b0a8af103", "/seed-media/events/rencontre-hcbe-participants-2.jpg", "La communauté à l’écoute pendant la rencontre", "Community members listening during the gathering", 2),
+                },
+            },
+            new Event
+            {
+                Id = Guid.Parse("9ed263c4-0ec5-4d2d-96b7-47f8d4e8f102"),
+                Title = "Sous le Baobab des Étalons — CAN 2025",
+                TitleEn = "Under the Stallions' Baobab — AFCON 2025",
+                Description = "Un rassemblement sportif et communautaire de la Zone 2 pour vivre ensemble la passion des Étalons et renforcer les liens entre les membres de la diaspora. Photos publiées par la page Facebook officielle du HCBE Canada le 22 décembre 2025.",
+                DescriptionEn = "A Zone 2 sports and community gathering to share the excitement around the Stallions and strengthen connections across the diaspora. Photos published by HCBE Canada's official Facebook page on December 22, 2025.",
+                Date = new DateTime(2025, 12, 22, 18, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 12, 22, 22, 0, 0, DateTimeKind.Utc),
+                Location = "Zone 2 — Canada",
+                LocationEn = "Zone 2 — Canada",
+                Type = "En présentiel",
+                Format = "InPerson",
+                Zone = "Zone 2",
+                RegistrationMode = "Disabled",
+                AllowWaitlist = false,
+                ImageUrl = "/seed-media/events/baobab-etalons-match.jpg",
+                Status = "Completed",
+                Media = new List<EventMedia>
+                {
+                    CreateSeedEventImage("8c29e71b-9db8-4df3-8397-1d3b0a8af201", "/seed-media/events/baobab-etalons-match.jpg", "Un temps fort du match partagé avec la communauté", "A highlight from the match shared with the community", 0),
+                    CreateSeedEventImage("8c29e71b-9db8-4df3-8397-1d3b0a8af202", "/seed-media/events/baobab-etalons-identite.jpg", "L’identité visuelle de Sous le Baobab des Étalons", "Under the Stallions' Baobab event artwork", 1),
+                },
+            },
+            new Event
+            {
+                Id = Guid.Parse("9ed263c4-0ec5-4d2d-96b7-47f8d4e8f103"),
+                Title = "Célébration culturelle et liens communautaires",
+                TitleEn = "Cultural celebration and community connections",
+                Description = "Une activité conviviale mettant en valeur la musique, la danse, les tenues traditionnelles et les rencontres entre générations au sein de la communauté burkinabè au Canada.",
+                DescriptionEn = "A welcoming celebration featuring music, dance, traditional clothing and intergenerational connections within the Burkinabè community in Canada.",
+                Date = new DateTime(2026, 8, 2, 18, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2026, 8, 2, 22, 0, 0, DateTimeKind.Utc),
+                Location = "Canada",
+                LocationEn = "Canada",
+                Type = "En présentiel",
+                Format = "InPerson",
+                Zone = "National",
+                RegistrationMode = "Disabled",
+                AllowWaitlist = false,
+                ImageUrl = "/seed-media/events/culture-rencontre.jpg",
+                Status = "Completed",
+                Media = new List<EventMedia>
+                {
+                    CreateSeedEventImage("8c29e71b-9db8-4df3-8397-1d3b0a8af301", "/seed-media/events/culture-rencontre.jpg", "Une rencontre chaleureuse entre les générations", "A warm intergenerational community moment", 0),
+                    CreateSeedEventImage("8c29e71b-9db8-4df3-8397-1d3b0a8af302", "/seed-media/events/culture-danse.jpg", "Danse et rythmes au cœur de la célébration", "Dance and rhythm at the heart of the celebration", 1),
+                    CreateSeedEventImage("8c29e71b-9db8-4df3-8397-1d3b0a8af303", "/seed-media/events/culture-artiste.jpg", "Prestation musicale pendant la célébration", "Musical performance during the celebration", 2),
+                },
+            },
+        };
+
+        foreach (var seededEvent in events)
+        {
+            var existingEvent = context.Events
+                .Include(item => item.Media)
+                .SingleOrDefault(item => item.Id == seededEvent.Id);
+
+            if (existingEvent == null)
+            {
+                context.Events.Add(seededEvent);
+                continue;
+            }
+
+            var existingMediaIds = existingEvent.Media.Select(item => item.Id).ToHashSet();
+            foreach (var media in seededEvent.Media.Where(item => !existingMediaIds.Contains(item.Id)))
+            {
+                existingEvent.Media.Add(media);
+            }
+        }
+
+        context.SaveChanges();
+    }
+
+    private static EventMedia CreateSeedEventImage(
+        string id,
+        string url,
+        string caption,
+        string captionEn,
+        int displayOrder) => new()
+        {
+            Id = Guid.Parse(id),
+            MediaType = "image",
+            Url = url,
+            FileName = Path.GetFileName(url),
+            ContentType = "image/jpeg",
+            Caption = caption,
+            CaptionEn = captionEn,
+            DisplayOrder = displayOrder,
+            CreatedAt = DateTime.UtcNow,
+        };
+
     private static void SeedNews(ApplicationDbContext context)
     {
         if (!context.News.Any())
