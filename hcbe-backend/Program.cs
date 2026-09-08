@@ -313,6 +313,26 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0,
                 AutoReplenishment = true
             }));
+    options.AddPolicy("AiPublic", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.GetUserId()?.ToString() ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 8,
+                Window = TimeSpan.FromMinutes(5),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+    options.AddPolicy("AiAdmin", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.GetUserId()?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(10),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
 });
 builder.Services.AddHttpClient("AssetProxy", client =>
 {
@@ -323,6 +343,12 @@ builder.Services.AddHttpClient("BrevoTransactional", client =>
 {
     client.BaseAddress = new Uri("https://api.brevo.com/v3/");
     client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddHttpClient("OpenAI", (services, client) =>
+{
+    var ai = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<AiOptions>>().Value;
+    client.BaseAddress = new Uri("https://api.openai.com/v1/");
+    client.Timeout = TimeSpan.FromSeconds(Math.Clamp(ai.TimeoutSeconds, 10, 120));
 });
 builder.Services.AddHttpContextAccessor();
 
@@ -403,6 +429,9 @@ builder.Services.AddScoped<IImpactAnalyticsService, ImpactAnalyticsService>();
 builder.Services.AddScoped<IMessagingService, MessagingService>();
 builder.Services.AddScoped<IPartnerService, PartnerService>();
 builder.Services.AddScoped<IPrivacyService, PrivacyService>();
+builder.Services.Configure<AiOptions>(builder.Configuration.GetSection(AiOptions.SectionName));
+builder.Services.AddSingleton<IAiProvider, OpenAiProvider>();
+builder.Services.AddScoped<IAiService, AiService>();
 builder.Services.AddHostedService<PrivacyRetentionWorker>();
 var financeConfiguration = builder.Configuration.GetSection(FinanceOptions.SectionName).Get<FinanceOptions>() ?? new FinanceOptions();
 if (financeConfiguration.Enabled && !financeConfiguration.Provider.Equals("Stripe", StringComparison.OrdinalIgnoreCase))
@@ -1365,6 +1394,7 @@ app.MapPartnerEndpoints();
 app.MapAuditEndpoints();
 app.MapEmailOutboxEndpoints();
 app.MapErrorIncidentEndpoints();
+app.MapAiEndpoints();
 app.MapHub<MessagingHub>("/hubs/messaging");
 app.MapHub<CmsHub>("/hubs/cms");
 app.MapPrivacyEndpoints();

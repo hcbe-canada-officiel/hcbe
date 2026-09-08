@@ -18,7 +18,7 @@ public sealed class CommunityGrowthServiceTests : IDisposable
     public void AdminAccess_UsesRoleDefaults_AndRejectsUnknownPermissions()
     {
         AdminAccess.EffectivePermissions("event-manager", null)
-            .Should().BeEquivalentTo([AdminPermissions.DashboardView, AdminPermissions.EventsManage, AdminPermissions.CommunicationsManage]);
+            .Should().BeEquivalentTo([AdminPermissions.DashboardView, AdminPermissions.EventsManage, AdminPermissions.CommunicationsManage, AdminPermissions.AiUse]);
 
         AdminAccess.SerializePermissions([AdminPermissions.ContentManage, "system.owner", AdminPermissions.ContentManage])
             .Should().Be(AdminPermissions.ContentManage);

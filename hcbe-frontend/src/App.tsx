@@ -12,6 +12,7 @@ import { CmsContentProvider } from "./contexts/CmsContentContext";
 import AccessibilityNavigation from "./components/AccessibilityNavigation";
 import PwaExperience from "./components/feature/PwaExperience";
 import PublicPageHelp from "./components/feature/PublicPageHelp";
+import CommunityAiAssistant from "./components/feature/CommunityAiAssistant";
 
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
               <ScrollToTop />
               <AppRoutes />
               <PublicPageHelp />
+              <CommunityAiAssistant />
               <BackToTopButton />
               <PwaExperience />
               <CookieConsent />

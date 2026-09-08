@@ -118,6 +118,13 @@ public sealed class ServiceCaseService(
         if (item is null) return ApiResponse<ServiceCaseDto>.ErrorResponse("Service request not found");
         var previousStatus = item.Status;
 
+        if (request.Category is not null)
+        {
+            var category = Categories.FirstOrDefault(candidate => candidate.Equals(request.Category.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (category is null) return ApiResponse<ServiceCaseDto>.ErrorResponse("Unsupported service category");
+            item.Category = category;
+        }
+
         if (request.Status is not null)
         {
             var status = Statuses.FirstOrDefault(candidate => candidate.Equals(request.Status.Trim(), StringComparison.OrdinalIgnoreCase));

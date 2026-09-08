@@ -74,11 +74,12 @@ public sealed class ServiceCaseServiceTests : IDisposable
         var created = await _service.CreateAsync(_memberUser.Id, new CreateServiceCaseRequest("employment", "Recherche d'emploi", "Je souhaite être orientée vers les ressources professionnelles disponibles."));
         _context.ChangeTracker.Clear();
 
-        var result = await _service.UpdateForAdminAsync(created.Data!.Id, new UpdateServiceCaseRequest("Resolved", "High", _adminUser.Id));
+        var result = await _service.UpdateForAdminAsync(created.Data!.Id, new UpdateServiceCaseRequest("Resolved", "High", _adminUser.Id, Category: "business"));
 
         result.Success.Should().BeTrue();
         result.Data!.AssignedToUserId.Should().Be(_adminUser.Id);
         result.Data.Status.Should().Be("Resolved");
+        result.Data.Category.Should().Be("business");
         result.Data.ResolvedAt.Should().NotBeNull();
     }
 

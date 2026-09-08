@@ -15,6 +15,36 @@ test('public home page renders the application shell', async ({ page }) => {
   if (process.env.E2E_CAPTURE_VISUALS) await page.getByTestId('home-cta').screenshot({ path: 'test-results/home-contact-cta.png' });
 });
 
+test('bilingual HCBE assistant discloses AI use and cites approved sources', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('i18nextLng', 'fr'));
+  await page.route('**/api/ai/status', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({
+      success: true, data: { enabled: true, configured: true, provider: 'OpenAI', model: 'test', features: { assistant: true, writingCopilot: true, eventExtraction: true, serviceRouting: true } },
+    }),
+  }));
+  await page.route('**/api/ai/assistant', async (route) => {
+    const body = route.request().postDataJSON();
+    expect(body.privacyAccepted).toBe(true);
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+      success: true, data: { answer: 'Consultez le service d’intégration.', sources: [{ id: '1', type: 'service', title: 'Intégration', url: '/services' }], requiresHumanHelp: false },
+    }) });
+  });
+  await page.goto('/');
+  const cookies = page.getByRole('button', { name: /accepter et continuer|accept and continue/i });
+  await expect(cookies).toBeVisible();
+  await cookies.click();
+  await page.getByRole('button', { name: /assistant hcbe/i }).click();
+  const dialog = page.getByRole('dialog', { name: /assistant hcbe/i });
+  await expect(dialog).toContainText(/contenus approuvés du hcbe/i);
+  await dialog.getByRole('checkbox').click();
+  await dialog.getByPlaceholder(/comment le hcbe/i).fill('Où trouver de l’aide?');
+  await dialog.getByRole('button', { name: /envoyer/i }).click();
+  await expect(dialog).toContainText('Consultez le service d’intégration.');
+  await expect(dialog.getByRole('link', { name: 'Intégration' })).toHaveAttribute('href', '/services');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});
+
 test('community advertising is clearly identified, bilingual and responsive', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('i18nextLng', 'fr'));
   await page.route('**/api/community-marketplace/ads?*', (route) => route.fulfill({

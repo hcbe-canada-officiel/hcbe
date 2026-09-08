@@ -383,7 +383,8 @@ public record UpdateServiceCaseRequest(
     bool ClearAssignee = false,
     [MaxLength(4000)] string? InternalNotes = null,
     Guid? AssignedAssociationId = null,
-    bool ClearAssociation = false);
+    bool ClearAssociation = false,
+    string? Category = null);
 
 public record CreateEventRequest(
     [Required] string Title,

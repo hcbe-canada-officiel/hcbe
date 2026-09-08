@@ -13,6 +13,8 @@ import { ArrowLink, Button, Field, RichTextEditor, inputClasses } from '../ui';
 import { formatFileSize, resolveMediaUrl } from '../../lib/api/media-url';
 import { eventCategoriesApi } from '../../lib/api/event-categories';
 import { communityMarketplaceApi } from '../../lib/api/community-marketplace';
+import { EventAiImporter } from './EventAiImporter';
+import type { AiEventDraft } from '../../lib/api/ai';
 import {
   EVENT_TIME_ZONES,
   isoToZonedInput,
@@ -90,6 +92,31 @@ export const EventForm: React.FC<EventFormProps> = ({
   const [communityOrganizers, setCommunityOrganizers] = useState<CommunityOrganizer[]>([]);
   const initialSnapshotRef = useRef(JSON.stringify(formData));
   const isDirty = JSON.stringify(formData) !== initialSnapshotRef.current;
+
+  const applyAiDraft = (draft: AiEventDraft) => {
+    const timeZone = draft.timeZone || formData.timeZone || 'America/Toronto';
+    setFormData((current) => ({
+      ...current,
+      title: draft.title || current.title,
+      titleEn: draft.titleEn || current.titleEn,
+      description: draft.description || current.description,
+      descriptionEn: draft.descriptionEn || current.descriptionEn,
+      date: draft.startsAt ? isoToZonedInput(draft.startsAt, timeZone) : current.date,
+      endDate: draft.endsAt ? isoToZonedInput(draft.endsAt, timeZone) : current.endDate,
+      timeZone,
+      location: draft.location || current.location,
+      locationEn: draft.locationEn || current.locationEn,
+      type: draft.type || current.type,
+      format: draft.format || current.format,
+      zone: draft.zone || current.zone,
+      capacity: draft.capacity ? String(draft.capacity) : current.capacity,
+      registrationDeadline: draft.registrationDeadline ? isoToZonedInput(draft.registrationDeadline, timeZone) : current.registrationDeadline,
+      meetingLink: draft.meetingLink || current.meetingLink,
+      registrationUrl: draft.registrationUrl || current.registrationUrl,
+      speakers: draft.speakers.length ? draft.speakers : current.speakers,
+      organizers: draft.organizers.length ? draft.organizers : current.organizers,
+    }));
+  };
 
   const hasCover = Boolean(coverFile || formData.imageUrl);
   const backPath = '/admin/events';
@@ -341,6 +368,7 @@ export const EventForm: React.FC<EventFormProps> = ({
         onSave={() => formRef.current?.requestSubmit()}
         secondaryActions={
           <div className="flex flex-wrap items-center gap-4">
+            <EventAiImporter french={!i18n.language.startsWith('en')} onApply={applyAiDraft} />
             <ArrowLink to="/admin/events/categories" tone="green">
               {t('admin.events.categories.manage')}
             </ArrowLink>

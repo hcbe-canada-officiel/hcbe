@@ -15,6 +15,8 @@ export const adminPermissionLabels: Record<string, Record<AdminPermissionLocale,
   'finance.manage': { fr: 'Gestion des finances', en: 'Finance management' },
   'security.manage': { fr: 'Gestion de la sécurité et des incidents', en: 'Security and incident management' },
   'privacy.manage': { fr: 'Supervision des contrôles Loi 25', en: 'Law 25 compliance oversight' },
+  'ai.use': { fr: 'Utilisation des assistants IA', en: 'AI assistant use' },
+  'ai.manage': { fr: 'Configuration et supervision de l’IA', en: 'AI configuration and oversight' },
 };
 
 export const getAdminPermissionLabel = (permission: string, locale: AdminPermissionLocale) =>

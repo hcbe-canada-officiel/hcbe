@@ -6,6 +6,7 @@ import { serviceCasesApi } from '../../../lib/api/service-cases';
 import { usersApi } from '../../../lib/api/users';
 import { associationsApi } from '../../../lib/api/associations';
 import type { AdminUser, Association, ServiceCase } from '../../../lib/api/types';
+import { aiApi, type AiRoutingSuggestion } from '../../../lib/api/ai';
 
 const statuses = ['Submitted', 'InReview', 'AwaitingMember', 'Resolved', 'Closed'];
 const priorities = ['Low', 'Normal', 'High', 'Urgent'];
@@ -23,6 +24,10 @@ export default function AdminServiceCasesPage() {
   const [internal, setInternal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState('');
+  const [aiSuggestion, setAiSuggestion] = useState<AiRoutingSuggestion | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiAccepted, setAiAccepted] = useState(false);
+  const [aiAvailable, setAiAvailable] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -37,6 +42,7 @@ export default function AdminServiceCasesPage() {
   };
 
   useEffect(() => { Promise.all([usersApi.getAdminUsers(), associationsApi.getAssociationsForAdmin()]).then(([adminResponse, organizationResponse]) => { if (adminResponse.data) setAdmins(adminResponse.data); if (organizationResponse.data) setOrganizations(organizationResponse.data); }).catch(() => undefined); }, []);
+  useEffect(() => { aiApi.status().then((response) => setAiAvailable(Boolean(response.data?.features?.serviceRouting))).catch(() => undefined); }, []);
   useEffect(() => { const timer = window.setTimeout(() => void load(), 250); return () => window.clearTimeout(timer); }, [filters.status, filters.category, filters.search]);
 
   const update = async (data: Parameters<typeof serviceCasesApi.adminUpdate>[1]) => {
@@ -58,6 +64,20 @@ export default function AdminServiceCasesPage() {
       const response = await serviceCasesApi.adminReply(selected.id, reply, internal);
       if (response.data) { setSelected(response.data); setReply(''); setNotice(fr ? 'Message ajouté.' : 'Message added.'); }
     } catch (error) { setNotice(error instanceof Error ? error.message : 'Error'); }
+  };
+
+  const suggestRoute = async () => {
+    if (!selected || !aiAccepted) return;
+    setAiBusy(true); setNotice(''); setAiSuggestion(null);
+    try { const response = await aiApi.routeCase(selected.id, fr ? 'fr' : 'en', aiAccepted); if (response.data) setAiSuggestion(response.data); else throw new Error(response.message); }
+    catch (error) { setNotice(error instanceof Error ? error.message : 'Error'); }
+    finally { setAiBusy(false); }
+  };
+
+  const applyRoute = async () => {
+    if (!aiSuggestion) return;
+    await update({ category: aiSuggestion.category, priority: aiSuggestion.priority, assignedAssociationId: aiSuggestion.associationId, clearAssociation: !aiSuggestion.associationId });
+    setAiSuggestion(null);
   };
 
   return (
@@ -84,8 +104,10 @@ export default function AdminServiceCasesPage() {
           </aside>
           <main className="p-5 sm:p-7">
             {selected ? <div className="space-y-7">
-              <header><p className="text-[10px] font-bold uppercase tracking-[.14em] text-red-link">{selected.ticketNumber} · {selected.category}</p><h2 className="mt-2 font-display text-3xl font-bold text-green-deep">{selected.subject}</h2><p className="mt-2 text-sm text-ink-variant">{selected.memberName} · {selected.memberEmail}</p><p className="mt-5 whitespace-pre-line rounded-2xl bg-canvas p-5 text-sm leading-7 text-ink">{selected.description}</p></header>
+              <header><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-red-link">{selected.ticketNumber} · {selected.category}</p><h2 className="mt-2 font-display text-3xl font-bold text-green-deep">{selected.subject}</h2><p className="mt-2 text-sm text-ink-variant">{selected.memberName} · {selected.memberEmail}</p></div>{aiAvailable && <div className="rounded-2xl border border-gold/30 bg-gold/[.06] p-3"><label className="flex items-start gap-2 text-[10px] leading-4 text-ink-variant"><input type="checkbox" checked={aiAccepted} onChange={(event) => setAiAccepted(event.target.checked)} className="mt-0.5 accent-green"/><span>{fr ? 'Aucune donnée sensible; validation humaine requise.' : 'No sensitive data; human review required.'}</span></label><button type="button" disabled={!aiAccepted || aiBusy} onClick={() => void suggestRoute()} className="mt-2 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.12em] text-green disabled:opacity-40">{aiBusy ? <i className="ri-loader-4-line animate-spin"/> : <i className="ri-route-line"/>}{fr ? 'Suggérer l’acheminement' : 'Suggest routing'}</button></div>}</div><p className="mt-5 whitespace-pre-line rounded-2xl bg-canvas p-5 text-sm leading-7 text-ink">{selected.description}</p></header>
+              {aiSuggestion && <section className="relative overflow-hidden rounded-[22px] bg-green-deep p-5 text-white"><div className="absolute -right-8 -top-10 h-32 w-32 rounded-full border-[22px] border-gold/10"/><div className="relative"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[9px] font-bold uppercase tracking-[.17em] text-gold">{fr ? 'Recommandation IA · à confirmer' : 'AI recommendation · review required'}</p><h3 className="mt-2 font-display text-2xl font-bold">{aiSuggestion.category} · {aiSuggestion.priority}</h3><p className="mt-1 text-sm text-white/70">{aiSuggestion.associationName || (fr ? 'Équipe centrale HCBE' : 'HCBE central team')}</p></div><span className="rounded-full border border-white/15 px-3 py-1 text-[10px] font-bold">{Math.round(aiSuggestion.confidence * 100)}%</span></div><p className="mt-4 text-sm leading-6 text-white/80">{aiSuggestion.rationale}</p>{aiSuggestion.reviewFlags.length > 0 && <ul className="mt-3 text-xs text-gold">{aiSuggestion.reviewFlags.map((flag) => <li key={flag}>• {flag}</li>)}</ul>}<div className="mt-5 flex gap-3"><Button type="button" onClick={() => void applyRoute()}>{fr ? 'Confirmer et appliquer' : 'Confirm and apply'}</Button><button type="button" onClick={() => setAiSuggestion(null)} className="text-xs font-bold uppercase tracking-wider text-white/65">{fr ? 'Ignorer' : 'Dismiss'}</button></div></div></section>}
               <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <Field label={fr ? 'Service' : 'Service'} htmlFor="case-category"><select id="case-category" className={inputClasses} value={selected.category} onChange={(event) => void update({ category: event.target.value })}>{categories.map((item) => <option key={item}>{item}</option>)}</select></Field>
                 <Field label={fr ? 'Statut' : 'Status'} htmlFor="case-status"><select id="case-status" className={inputClasses} value={selected.status} onChange={(event) => void update({ status: event.target.value })}>{statuses.map((item) => <option key={item}>{item}</option>)}</select></Field>
                 <Field label={fr ? 'Priorité' : 'Priority'} htmlFor="case-priority"><select id="case-priority" className={inputClasses} value={selected.priority} onChange={(event) => void update({ priority: event.target.value })}>{priorities.map((item) => <option key={item}>{item}</option>)}</select></Field>
                 <Field label={fr ? 'Responsable' : 'Assignee'} htmlFor="case-assignee"><select id="case-assignee" className={inputClasses} value={selected.assignedToUserId || ''} onChange={(event) => void update(event.target.value ? { assignedToUserId: event.target.value } : { clearAssignee: true })}><option value="">{fr ? 'Non assigné' : 'Unassigned'}</option>{admins.map((admin) => <option key={admin.id} value={admin.id}>{admin.firstName} {admin.lastName}</option>)}</select></Field>

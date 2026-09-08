@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { aiApi } from '../../lib/api/ai';
 
 const allowedElements = ['p', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'strong', 'em', 'blockquote', 'a', 'hr', 'br', 'code'];
 
@@ -56,7 +57,32 @@ const formats: Array<{ name: Format; icon: string; fr: string; en: string }> = [
 export function RichTextEditor({ id, value, onChange, placeholder, required, maxLength, minHeight = 240, className = '', label }: RichTextEditorProps) {
   const textarea = useRef<HTMLTextAreaElement>(null);
   const [preview, setPreview] = useState(false);
+  const [aiAvailable, setAiAvailable] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiAction, setAiAction] = useState(value.trim() ? 'improve' : 'draft');
+  const [aiInstruction, setAiInstruction] = useState('');
+  const [aiResult, setAiResult] = useState('');
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [aiAccepted, setAiAccepted] = useState(() => localStorage.getItem('hcbe_admin_ai_notice_accepted') === 'true');
   const french = document.documentElement.lang !== 'en';
+
+  useEffect(() => {
+    if (!window.location.pathname.startsWith('/admin')) return;
+    aiApi.status().then((response) => setAiAvailable(Boolean(response.data?.features?.writingCopilot))).catch(() => undefined);
+  }, []);
+
+  const generateDraft = async () => {
+    const source = value.trim() || aiInstruction.trim();
+    if (!source || !aiAccepted) return;
+    setAiBusy(true); setAiError(''); setAiResult('');
+    try {
+      const response = await aiApi.write(source, aiAction, french ? 'fr' : 'en', label || 'content', aiInstruction, aiAccepted);
+      if (!response.data) throw new Error(response.message);
+      setAiResult(response.data.body);
+    } catch (error) { setAiError(error instanceof Error ? error.message : (french ? 'Impossible de générer le brouillon.' : 'Unable to generate the draft.')); }
+    finally { setAiBusy(false); }
+  };
 
   const format = (kind: Format) => {
     const element = textarea.current;
@@ -96,10 +122,19 @@ export function RichTextEditor({ id, value, onChange, placeholder, required, max
           ))}
         </div>
         <div className="flex rounded-lg border border-line bg-surface p-0.5 text-[9px] font-bold uppercase tracking-[.1em]">
+          {aiAvailable && <button type="button" onClick={() => setAiOpen((current) => !current)} className={`mr-1 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition ${aiOpen ? 'bg-gold text-green-deep' : 'text-green'}`}><i className="ri-sparkling-2-fill" />IA</button>}
           <button type="button" onClick={() => setPreview(false)} className={`rounded-md px-2.5 py-1.5 transition ${!preview ? 'bg-green text-white' : 'text-ink-variant'}`}>{french ? 'Écrire' : 'Write'}</button>
           <button type="button" onClick={() => setPreview(true)} className={`rounded-md px-2.5 py-1.5 transition ${preview ? 'bg-green text-white' : 'text-ink-variant'}`}>{french ? 'Aperçu' : 'Preview'}</button>
         </div>
       </div>
+      {aiOpen && <div className="border-b border-line bg-green-deep px-4 py-4 text-white">
+        <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="text-[9px] font-bold uppercase tracking-[.18em] text-gold">{french ? 'Copilote éditorial' : 'Editorial copilot'}</p><p className="mt-1 text-xs text-white/65">{french ? 'Le texte ne change qu’après votre validation.' : 'Your text changes only after you approve it.'}</p></div><select value={aiAction} onChange={(event) => setAiAction(event.target.value)} className="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-xs text-white outline-none">{[['draft', french ? 'Rédiger' : 'Draft'], ['improve', french ? 'Améliorer' : 'Improve'], ['rewrite', french ? 'Réécrire' : 'Rewrite'], ['shorten', french ? 'Raccourcir' : 'Shorten'], ['translate', french ? 'Traduire' : 'Translate']].map(([key, text]) => <option className="text-ink" key={key} value={key}>{text}</option>)}</select></div>
+        <textarea rows={2} value={aiInstruction} onChange={(event) => setAiInstruction(event.target.value)} className="mt-3 block w-full resize-y rounded-xl border border-white/15 bg-white/[.08] px-3 py-2 text-xs text-white outline-none placeholder:text-white/45" placeholder={french ? 'Consigne ou contexte (sans données sensibles)…' : 'Instruction or context (no sensitive data)…'} />
+        <label className="mt-3 flex items-start gap-2 text-[11px] leading-4 text-white/65"><input type="checkbox" checked={aiAccepted} onChange={(event) => { setAiAccepted(event.target.checked); if (event.target.checked) localStorage.setItem('hcbe_admin_ai_notice_accepted', 'true'); }} className="mt-0.5 accent-gold" /><span>{french ? 'J’ai retiré les données sensibles et je vérifierai le résultat.' : 'I removed sensitive data and will review the result.'}</span></label>
+        <button type="button" disabled={aiBusy || !aiAccepted || (!value.trim() && !aiInstruction.trim())} onClick={() => void generateDraft()} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-gold px-4 py-2 text-[10px] font-bold uppercase tracking-[.12em] text-green-deep disabled:opacity-40">{aiBusy ? <i className="ri-loader-4-line animate-spin" /> : <i className="ri-sparkling-2-line" />}{french ? 'Générer un brouillon' : 'Generate draft'}</button>
+        {aiError && <p className="mt-3 text-xs text-red-200">{aiError}</p>}
+        {aiResult && <div className="mt-4 rounded-2xl bg-white p-4 text-ink"><p className="mb-2 text-[9px] font-bold uppercase tracking-[.15em] text-green">{french ? 'Proposition à vérifier' : 'Draft to review'}</p><div className="max-h-56 overflow-y-auto"><RichTextContent value={aiResult} /></div><div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => { if (!maxLength || aiResult.length <= maxLength) { onChange(aiResult); setAiOpen(false); setPreview(false); } }} className="rounded-lg bg-green px-3 py-2 text-[10px] font-bold uppercase tracking-[.1em] text-white">{french ? 'Remplacer le texte' : 'Replace text'}</button><button type="button" onClick={() => { const next = `${value}${value ? '\n\n' : ''}${aiResult}`; if (!maxLength || next.length <= maxLength) { onChange(next); setAiOpen(false); } }} className="rounded-lg border border-green/20 px-3 py-2 text-[10px] font-bold uppercase tracking-[.1em] text-green">{french ? 'Ajouter à la suite' : 'Append'}</button></div></div>}
+      </div>}
       {preview ? (
         <div className="overflow-y-auto px-5 py-4" style={{ minHeight }} aria-label={french ? `Aperçu ${label || ''}` : `${label || ''} preview`}>
           {value ? <RichTextContent value={value} /> : <p className="text-sm italic text-ink-variant/70">{french ? 'Commencez à écrire pour afficher l’aperçu.' : 'Start writing to see a preview.'}</p>}
