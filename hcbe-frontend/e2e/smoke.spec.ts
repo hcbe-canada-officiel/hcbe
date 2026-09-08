@@ -305,6 +305,41 @@ test('public jobs are searchable and require the member portal to apply', async 
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
+test('technical SEO exposes canonical metadata, structured data, robots and sitemap', async ({ page, request }) => {
+  await page.addInitScript(() => localStorage.setItem('i18nextLng', 'fr'));
+  await page.goto('/emplois');
+  await expect(page).toHaveTitle(/emplois communautaires.*HCBE Canada/i);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://hcbe.ca/emplois');
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /offres d’emploi/i);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /^index, follow/);
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', 'https://hcbe.ca/emplois');
+  await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute('content', 'fr_CA');
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary');
+  const structuredData = JSON.parse(await page.locator('#hcbe-structured-data').textContent() || '{}');
+  expect(structuredData['@context']).toBe('https://schema.org');
+  expect(structuredData['@graph'].some((entry: { '@type'?: string }) => entry['@type'] === 'Organization')).toBeTruthy();
+  expect(structuredData['@graph'].some((entry: { '@type'?: string }) => entry['@type'] === 'CollectionPage')).toBeTruthy();
+
+  await page.getByRole('button', { name: 'English' }).click();
+  await expect(page).toHaveTitle(/community jobs.*HCBE Canada/i);
+  await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute('content', 'en_CA');
+
+  await page.goto('/admin/login');
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow, noarchive');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://hcbe.ca/admin/login');
+
+  const robots = await request.get('/robots.txt');
+  expect(robots.ok()).toBeTruthy();
+  expect(await robots.text()).toContain('Disallow: /admin/');
+  expect(await robots.text()).toContain('Sitemap: https://hcbe.ca/sitemap.xml');
+  const sitemap = await request.get('/sitemap.xml');
+  expect(sitemap.ok()).toBeTruthy();
+  const sitemapXml = await sitemap.text();
+  expect(sitemapXml).toContain('<loc>https://hcbe.ca/emplois</loc>');
+  expect(sitemapXml).not.toContain('/admin/');
+  expect(sitemapXml).not.toContain('/espace-membre');
+});
+
 test('privacy policy publishes account rights and the privacy contact', async ({ page }) => {
   await page.goto('/confidentialite');
 

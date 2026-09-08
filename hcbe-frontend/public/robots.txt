@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /espace-membre
+Disallow: /paiement/
+Disallow: /adhesion/verifier/
+Disallow: /billets/commande/
+
+Sitemap: https://hcbe.ca/sitemap.xml

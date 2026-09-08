@@ -33,6 +33,17 @@ const pageLabels: Record<string, { fr: string; en: string; path: string }> = {
   member: { fr: 'Espace membre', en: 'Member space', path: '/espace-membre' },
   grants: { fr: 'Bourses', en: 'Grants', path: '/services/bourses' },
   privacy: { fr: 'Confidentialité', en: 'Privacy', path: '/confidentialite' },
+  documents: { fr: 'Documents officiels', en: 'Official documents', path: '/services/documents-officiels' },
+  committees: { fr: 'Comités', en: 'Committees', path: '/services/comites' },
+  events: { fr: 'Événements', en: 'Events', path: '/actualites/evenements' },
+  announcements: { fr: 'Annonces', en: 'Announcements', path: '/actualites/annonces' },
+  memories: { fr: 'Souvenirs', en: 'Memories', path: '/actualites/souvenirs' },
+  associations: { fr: 'Associations', en: 'Associations', path: '/engagement/annuaire' },
+  projects: { fr: 'Projets', en: 'Projects', path: '/engagement/projets' },
+  consultations: { fr: 'Consultations', en: 'Consultations', path: '/engagement/consultations' },
+  jobs: { fr: 'Emplois', en: 'Jobs', path: '/emplois' },
+  resources: { fr: 'Ressources et entreprises', en: 'Resources and businesses', path: '/communaute/ressources' },
+  contribute: { fr: 'Contribuer', en: 'Contribute', path: '/contribuer' },
 };
 
 const extraCatalog: CatalogEntry[] = [
@@ -66,7 +77,7 @@ const extraCatalog: CatalogEntry[] = [
     labelEn: 'Website description',
     fallbackFr: 'Services, actualités et communauté des Burkinabè au Canada.', fallbackEn: 'Services, news and community for Burkinabè people in Canada.',
   },
-  ...['home', 'services', 'news', 'engagement', 'contact', 'member'].flatMap((page) => [
+  ...['home', 'services', 'news', 'engagement', 'contact', 'member', 'grants', 'privacy', 'documents', 'committees', 'events', 'announcements', 'memories', 'associations', 'projects', 'consultations', 'jobs', 'resources', 'contribute'].flatMap((page) => [
     { key: `seo.${page}.title`, page, section: 'seo', contentType: 'seo' as const, label: `SEO · ${page} · titre`, labelEn: `SEO · ${page} · title`, fallbackFr: '', fallbackEn: '' },
     { key: `seo.${page}.description`, page, section: 'seo', contentType: 'seo' as const, label: `SEO · ${page} · description`, labelEn: `SEO · ${page} · description`, fallbackFr: '', fallbackEn: '' },
   ]),

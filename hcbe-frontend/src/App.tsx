@@ -13,6 +13,7 @@ import AccessibilityNavigation from "./components/AccessibilityNavigation";
 import PwaExperience from "./components/feature/PwaExperience";
 import PublicPageHelp from "./components/feature/PublicPageHelp";
 import CommunityAiAssistant from "./components/feature/CommunityAiAssistant";
+import SeoManager from "./components/SeoManager";
 
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
         <AuthProvider>
           <BrowserRouter basename={__BASE_PATH__}>
             <CmsContentProvider>
+              <SeoManager />
               <AccessibilityNavigation />
               <ScrollToTop />
               <AppRoutes />

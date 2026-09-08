@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
 import i18n from '../i18n';
 import { messages } from '../i18n/local';
 import { siteContentApi } from '../lib/api/site-content';
@@ -25,17 +24,8 @@ interface CmsContentContextValue {
 
 const CmsContentContext = createContext<CmsContentContextValue | undefined>(undefined);
 
-const pageFromPath = (pathname: string) => {
-  if (pathname === '/') return 'home';
-  const firstSegment = pathname.split('/').filter(Boolean)[0] || 'home';
-  if (firstSegment === 'actualites') return 'news';
-  if (firstSegment === 'espace-membre') return 'member';
-  return firstSegment;
-};
-
 export const CmsContentProvider = ({ children }: { children: ReactNode }) => {
   const { i18n: activeI18n } = useTranslation();
-  const location = useLocation();
   const [items, setItems] = useState<Record<string, CmsPublishedContentDto>>({});
   const [loading, setLoading] = useState(true);
   const [version, setVersion] = useState(0);
@@ -97,25 +87,6 @@ export const CmsContentProvider = ({ children }: { children: ReactNode }) => {
     const english = activeI18n.language.startsWith('en');
     return (english ? item.valueEn || item.valueFr : item.valueFr || item.valueEn) || fallback;
   }, [activeI18n.language, items]);
-
-  useEffect(() => {
-    const page = pageFromPath(location.pathname);
-    const language = activeI18n.language.startsWith('en') ? 'en' : 'fr';
-    const localizedValue = (key: string) => {
-      const item = items[key];
-      return language === 'en' ? item?.valueEn || item?.valueFr : item?.valueFr || item?.valueEn;
-    };
-    const title = localizedValue(`seo.${page}.title`) || localizedValue('seo.global.title');
-    const description = localizedValue(`seo.${page}.description`) || localizedValue('seo.global.description');
-    document.title = title || "HCBE Canada - Haut Conseil des Burkinabè de l'Extérieur au Canada";
-    let meta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.name = 'description';
-      document.head.appendChild(meta);
-    }
-    meta.content = description || 'Services, actualités et communauté des Burkinabè au Canada.';
-  }, [activeI18n.language, items, location.pathname]);
 
   const value = useMemo(() => ({ loading, version, getValue, refresh }), [getValue, loading, refresh, version]);
   return <CmsContentContext.Provider value={value}>{children}</CmsContentContext.Provider>;

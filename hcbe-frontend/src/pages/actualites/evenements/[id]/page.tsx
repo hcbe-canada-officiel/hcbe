@@ -5,7 +5,7 @@ import Navbar from '../../../../components/feature/Navbar';
 import Footer from '../../../../components/feature/Footer';
 import { EventMediaGallery } from '../../../../components/events/EventMediaGallery';
 import ImageCarousel from '../../../../components/media/ImageCarousel';
-import { ArrowLink, EmptyState, RichTextContent, StatusChip } from '../../../../components/ui';
+import { ArrowLink, EmptyState, RichTextContent, StatusChip, plainTextFromRichText } from '../../../../components/ui';
 import { buildApiUrl } from '../../../../lib/api/base-url';
 import { formatFileSize, resolveMediaUrl } from '../../../../lib/api/media-url';
 import type { Event } from '../../../../lib/api/types';
@@ -18,6 +18,7 @@ import { EventRegistrationPanel } from '../../../../components/events/EventRegis
 import { EventTicketPurchasePanel } from '../../../../components/events/EventTicketPurchasePanel';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { engagementApi } from '../../../../lib/api/engagement';
+import { usePageSeo } from '../../../../components/SeoManager';
 
 interface PracticalDetail {
   icon: string;
@@ -97,6 +98,22 @@ export const EventDetailPage: React.FC = () => {
     if (!id || !isAuthenticated || !user?.memberId) return;
     engagementApi.getSaved().then((response) => setSaved(Boolean(response.data?.some((item) => item.entityType === 'Event' && item.entityId === id)))).catch(() => undefined);
   }, [id, isAuthenticated, user?.memberId]);
+
+  const seoTitle = event ? localized(event.title, event.titleEn, i18n.language) : '';
+  const seoDescription = event ? plainTextFromRichText(localizedOptional(event.description, event.descriptionEn, i18n.language) || seoTitle).slice(0, 180) : '';
+  usePageSeo({
+    enabled: Boolean(event), title: seoTitle, description: seoDescription,
+    image: event?.imageUrl ? resolveMediaUrl(event.imageUrl) : undefined,
+    mainEntity: event ? {
+      '@type': 'Event', name: seoTitle, description: seoDescription, startDate: event.date,
+      ...(event.endDate ? { endDate: event.endDate } : {}),
+      eventAttendanceMode: event.format === 'Online' ? 'https://schema.org/OnlineEventAttendanceMode' : event.format === 'Hybrid' ? 'https://schema.org/MixedEventAttendanceMode' : 'https://schema.org/OfflineEventAttendanceMode',
+      eventStatus: 'https://schema.org/EventScheduled',
+      location: event.format === 'Online' ? { '@type': 'VirtualLocation', url: `https://hcbe.ca/actualites/evenements/${event.id}` } : { '@type': 'Place', name: localizedOptional(event.location, event.locationEn, i18n.language) || 'Canada' },
+      organizer: { '@type': 'Organization', name: event.organizers[0] || 'HCBE Canada', url: 'https://hcbe.ca/' },
+      ...(event.imageUrl ? { image: [resolveMediaUrl(event.imageUrl)] } : {}),
+    } : undefined,
+  });
 
   const toggleSaved = async () => {
     if (!id) return;

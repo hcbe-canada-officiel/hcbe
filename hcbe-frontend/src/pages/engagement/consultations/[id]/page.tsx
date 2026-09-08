@@ -7,6 +7,7 @@ import { Button, EmptyState, PageHeader, RichTextContent, plainTextFromRichText 
 import { consultationsApi } from '../../../../lib/api/consultations';
 import type { Consultation } from '../../../../lib/api/types';
 import { localized } from '../../../../lib/i18n/localized';
+import { usePageSeo } from '../../../../components/SeoManager';
 
 const ConsultationDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +35,17 @@ const ConsultationDetailPage = () => {
   }, [id]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const seoTitle = item ? localized(item.title, item.titleEn, i18n.language) : '';
+  const seoDescription = item ? plainTextFromRichText(localized(item.description, item.descriptionEn, i18n.language)).slice(0, 180) : '';
+  usePageSeo({
+    enabled: Boolean(item), title: seoTitle, description: seoDescription,
+    mainEntity: item ? {
+      '@type': 'Article', headline: seoTitle, description: seoDescription,
+      datePublished: item.createdAt, dateModified: item.updatedAt,
+      publisher: { '@id': 'https://hcbe.ca/#organization' },
+    } : undefined,
+  });
 
   const vote = async (event: FormEvent) => {
     event.preventDefault();

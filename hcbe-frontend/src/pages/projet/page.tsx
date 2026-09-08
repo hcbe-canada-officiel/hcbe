@@ -5,7 +5,8 @@ import { projectsApi } from '../../lib/api/projects';
 import { resolveMediaUrl } from '../../lib/api/media-url';
 import type { Project } from '../../lib/api/types';
 import { localized } from '../../lib/i18n/localized';
-import { ArrowLink, Button, EmptyState, RichTextContent, Tag } from '../../components/ui';
+import { ArrowLink, Button, EmptyState, RichTextContent, Tag, plainTextFromRichText } from '../../components/ui';
+import { usePageSeo } from '../../components/SeoManager';
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -51,6 +52,19 @@ const ProjectDetailPage = () => {
     t(`public.engagement.projets.status.${status}`, { defaultValue: status });
   const typeLabel = (type: string) =>
     t(`public.engagement.projets.type.${type}`, { defaultValue: type });
+
+  const seoTitle = project ? localized(project.title, project.titleEn, i18n.language) : '';
+  const seoDescription = project ? plainTextFromRichText(localized(project.description, project.descriptionEn, i18n.language)).slice(0, 180) : '';
+  usePageSeo({
+    enabled: Boolean(project), title: seoTitle, description: seoDescription,
+    image: project?.imageUrl ? resolveMediaUrl(project.imageUrl) : undefined,
+    mainEntity: project ? {
+      '@type': 'CreativeWork', name: seoTitle, description: seoDescription,
+      dateCreated: project.createdAt, dateModified: project.updatedAt,
+      creator: { '@id': 'https://hcbe.ca/#organization' },
+      ...(project.imageUrl ? { image: [resolveMediaUrl(project.imageUrl)] } : {}),
+    } : undefined,
+  });
 
   if (loading) {
     return (

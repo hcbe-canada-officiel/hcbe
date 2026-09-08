@@ -58,10 +58,6 @@ export default function JobsPage() {
     }
   };
 
-  useEffect(() => {
-    document.title = en ? 'Community jobs | HCBE Canada' : 'Emplois communautaires | HCBE Canada';
-  }, [en]);
-
   useEffect(() => { void load(); }, []);
 
   const visible = useMemo(() => {

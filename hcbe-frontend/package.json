@@ -8,8 +8,9 @@
     "icons:pwa": "node scripts/render-pwa-icons.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
     "check:budget": "node scripts/check-build-budgets.mjs",
+    "check:seo": "node scripts/check-seo.mjs",
     "typecheck": "tsc --noEmit",
-    "build": "vite build",
+    "build": "vite build && node scripts/generate-seo-pages.mjs",
     "preview": "vite preview",
     "test:e2e": "playwright test"
   },

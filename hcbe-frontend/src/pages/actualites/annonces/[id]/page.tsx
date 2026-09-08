@@ -11,7 +11,8 @@ import { isImageFile } from '../../../../lib/media/is-image-file';
 import { getNewsCategoryLabelKey } from '../../../../lib/news/category-styles';
 import { newsImageObjectPositionClass } from '../../../../lib/news/image-position';
 import { localized } from '../../../../lib/i18n/localized';
-import { ArrowLink, Button, EmptyState, RichTextContent, Tag } from '../../../../components/ui';
+import { ArrowLink, Button, EmptyState, RichTextContent, Tag, plainTextFromRichText } from '../../../../components/ui';
+import { usePageSeo } from '../../../../components/SeoManager';
 
 const formatDate = (dateString: string, locale: string) =>
   new Intl.DateTimeFormat(locale.startsWith('en') ? 'en-CA' : 'fr-CA', {
@@ -76,6 +77,20 @@ const AnnonceDetailPage = () => {
       ),
     };
   }, [article]);
+
+  const seoTitle = article ? localized(article.title, article.titleEn, i18n.language) : '';
+  const seoDescription = article ? plainTextFromRichText(localized(article.excerpt || article.content, article.excerptEn || article.contentEn, i18n.language)).slice(0, 180) : '';
+  usePageSeo({
+    enabled: Boolean(article), title: seoTitle, description: seoDescription,
+    image: article?.imageUrl ? resolveMediaUrl(article.imageUrl) : undefined,
+    mainEntity: article ? {
+      '@type': 'NewsArticle', headline: seoTitle, description: seoDescription,
+      datePublished: article.publishedDate || article.createdAt, dateModified: article.updatedAt,
+      author: { '@type': 'Organization', name: article.author || 'HCBE Canada' },
+      publisher: { '@id': 'https://hcbe.ca/#organization' },
+      ...(article.imageUrl ? { image: [resolveMediaUrl(article.imageUrl)] } : {}),
+    } : undefined,
+  });
 
   if (loading) {
     return (
