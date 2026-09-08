@@ -129,23 +129,11 @@ test('empty advertising placement keeps its callout readable in both languages',
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
-test('public page help explains the current feature in both languages', async ({ page }) => {
-  await page.goto('/services');
-  const helpButton = page.getByRole('button', { name: /aide pour cette page|help for this page/i });
-  await expect(helpButton).toBeVisible();
-  await helpButton.click();
-  const dialog = page.getByRole('dialog', { name: /utiliser les services|use hcbe services/i });
-  await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText(/connectez-vous|sign in/i);
-  if (process.env.E2E_CAPTURE_VISUALS) await page.screenshot({ path: 'test-results/public-help-desktop.png', fullPage: true });
-  await page.keyboard.press('Escape');
-  await expect(dialog).toBeHidden();
-
-  await page.getByRole('button', { name: 'English' }).click();
-  await helpButton.click();
-  await expect(page.getByRole('dialog', { name: /use hcbe services/i })).toBeVisible();
-  await page.setViewportSize({ width: 390, height: 844 });
-  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+test('public page help launcher stays hidden across public routes', async ({ page }) => {
+  for (const path of ['/services', '/engagement/consultations', '/espace-membre']) {
+    await page.goto(path);
+    await expect(page.getByTestId('public-page-help-button')).toHaveCount(0);
+  }
 });
 
 test('PWA manifest, offline fallback and service worker are production-ready', async ({ page, request }) => {
