@@ -276,7 +276,7 @@ const DocumentsOfficielsPage = () => {
               <Button to="/contact" variant="primary">
                 {t('public.services.documents.helpContact')}
               </Button>
-              <Button to="/services" variant="secondary" className="border-white text-white hover:bg-white hover:text-green">
+              <Button to="/services" variant="inverse">
                 {t('public.services.documents.helpBack')}
               </Button>
             </div>

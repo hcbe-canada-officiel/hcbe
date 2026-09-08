@@ -133,8 +133,7 @@ const BoursesSection = () => {
               </Button>
               <Button
                 to="/services"
-                variant="secondary"
-                className="border-white text-white hover:bg-white hover:text-green"
+                variant="inverse"
               >
                 {t('public.grants.helpBack')}
               </Button>

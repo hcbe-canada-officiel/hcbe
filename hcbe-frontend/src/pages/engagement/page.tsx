@@ -139,7 +139,7 @@ const EngagementPage = () => {
             <Button to="/espace-membre" variant="primary">
               {t('public.engagement.page.cta.member')}
             </Button>
-            <Button to="/contact" variant="secondary" className="border-white text-white hover:bg-white hover:text-green">
+            <Button to="/contact" variant="inverse">
               {t('public.engagement.page.cta.contact')}
             </Button>
           </div>
