@@ -36,6 +36,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const sessionRevisionRef = useRef(0);
 
   const isAuthenticated = user !== null;
   const isAdmin = user?.isAdmin || false;
@@ -62,6 +63,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const storeSession = (token: string, authenticatedUser: User) => {
+    sessionRevisionRef.current += 1;
     localStorage.setItem('hcbe_token', token);
     localStorage.setItem('hcbe_user', JSON.stringify(authenticatedUser));
     setUser(authenticatedUser);
@@ -151,17 +153,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
+    sessionRevisionRef.current += 1;
     authApi.logout();
     setUser(null);
   };
 
   const checkAuth = async () => {
+    const sessionRevision = sessionRevisionRef.current;
     setIsLoading(true);
     try {
       const token = localStorage.getItem('hcbe_token');
       if (!token) {
         try {
           const refreshed = await authApi.refresh();
+          if (sessionRevisionRef.current !== sessionRevision) return;
           if (refreshed.success && refreshed.data?.token && refreshed.data.user) {
             storeSession(refreshed.data.token, refreshed.data.user);
           } else {
@@ -169,6 +174,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(null);
           }
         } catch {
+          if (sessionRevisionRef.current !== sessionRevision) return;
           localStorage.removeItem('hcbe_user');
           setUser(null);
         }
@@ -176,6 +182,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const response = await authApi.getCurrentUser();
+      if (sessionRevisionRef.current !== sessionRevision) return;
       if (response.success && response.data) {
         setUser(response.data);
         localStorage.setItem('hcbe_user', JSON.stringify(response.data));
@@ -185,6 +192,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(null);
       }
     } catch (error) {
+      if (sessionRevisionRef.current !== sessionRevision) return;
       console.error('Auth check error:', error);
       authApi.logout();
       setUser(null);
