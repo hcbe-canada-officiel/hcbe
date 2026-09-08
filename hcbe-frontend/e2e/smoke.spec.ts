@@ -190,7 +190,7 @@ test('representative public routes meet automated WCAG 2.2 AA checks', async ({ 
   test.setTimeout(90_000);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const violations: string[] = [];
-  for (const route of ['/', '/services', '/communaute/ressources', '/actualites/evenements', '/contact', '/espace-membre', '/admin/login']) {
+  for (const route of ['/', '/services', '/communaute/ressources', '/emplois', '/actualites/evenements', '/contact', '/espace-membre', '/admin/login']) {
     await page.goto(route);
     await page.locator('main').first().waitFor();
     const results = await new AxeBuilder({ page })
@@ -221,7 +221,7 @@ test('every public workspace exposes a single skip-link target', async ({ page }
     '/', '/services', '/services/bourses', '/services/comites', '/services/documents-officiels',
     '/actualites', '/actualites/evenements', '/actualites/annonces', '/actualites/souvenirs',
     '/engagement', '/engagement/annuaire', '/engagement/projets', '/engagement/consultations',
-    '/contact', '/confidentialite', '/contribuer', '/communaute/ressources', '/espace-membre',
+    '/contact', '/confidentialite', '/contribuer', '/communaute/ressources', '/emplois', '/espace-membre',
   ];
 
   for (const route of routes) {
@@ -249,7 +249,7 @@ test('public and authentication routes render cleanly in French and English', as
     '/', '/services', '/services/bourses', '/services/comites', '/services/documents-officiels',
     '/actualites', '/actualites/evenements', '/actualites/annonces', '/actualites/souvenirs',
     '/engagement', '/engagement/annuaire', '/engagement/projets', '/engagement/consultations',
-    '/contact', '/confidentialite', '/contribuer', '/communaute/ressources', '/espace-membre', '/admin/login',
+    '/contact', '/confidentialite', '/contribuer', '/communaute/ressources', '/emplois', '/espace-membre', '/admin/login',
   ];
 
   for (const language of ['fr', 'en']) {
@@ -264,6 +264,45 @@ test('public and authentication routes render cleanly in French and English', as
       await expect(page.locator('html')).toHaveAttribute('lang', language);
     }
   }
+});
+
+test('public jobs are searchable and require the member portal to apply', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route('**/api/opportunities?type=Job', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: [{
+          id: 'job-e2e-1',
+          title: 'Coordonnateur communautaire',
+          titleEn: 'Community Coordinator',
+          description: 'Accompagner les membres et coordonner les activités régionales.',
+          descriptionEn: 'Support members and coordinate regional activities.',
+          type: 'Job',
+          organization: 'HCBE Canada',
+          location: 'Montréal',
+          isRemote: false,
+          skills: 'Coordination, communication',
+          deadlineUtc: '2027-01-30T23:59:00Z',
+          status: 'Published',
+          applicationCount: 0,
+          createdAt: '2026-09-01T12:00:00Z',
+          updatedAt: '2026-09-01T12:00:00Z',
+        }],
+      }),
+    });
+  });
+
+  await page.goto('/emplois');
+  await expect(page.getByRole('heading', { name: /coordonnateur communautaire|community coordinator/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /se connecter comme membre pour postuler|sign in as a member to apply/i })).toHaveAttribute('href', '/espace-membre?section=opportunities&opportunity=job-e2e-1');
+  await page.getByRole('searchbox').fill('Toronto');
+  await expect(page.getByText(/aucun emploi publié|no published job/i)).toBeVisible();
+  await page.getByRole('button', { name: /réinitialiser|reset/i }).click();
+  await expect(page.getByRole('heading', { name: /coordonnateur communautaire|community coordinator/i })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
 test('privacy policy publishes account rights and the privacy contact', async ({ page }) => {

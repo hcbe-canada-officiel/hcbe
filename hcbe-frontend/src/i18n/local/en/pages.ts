@@ -294,6 +294,12 @@ export default {
   'public.engagement.page.cards.consultations.features.surveys': 'Regular surveys',
   'public.engagement.page.cards.consultations.features.public': 'Public consultations',
   'public.engagement.page.cards.consultations.features.feedback': 'Community feedback',
+  'public.engagement.page.cards.jobs.title': 'Community jobs',
+  'public.engagement.page.cards.jobs.description': 'Browse positions published by HCBE and trusted organizations across the network.',
+  'public.engagement.page.cards.jobs.stats': 'Talent in motion',
+  'public.engagement.page.cards.jobs.features.public': 'Public listings',
+  'public.engagement.page.cards.jobs.features.search': 'Search by location and skill',
+  'public.engagement.page.cards.jobs.features.tracking': 'Applications tracked in the member portal',
   'public.engagement.page.cards.explore': 'Explore this section',
   'public.engagement.page.cta.title': 'Ready to Get Involved?',
   'public.engagement.page.cta.subtitle':

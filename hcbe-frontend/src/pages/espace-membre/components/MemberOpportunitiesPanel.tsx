@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Field, RichTextContent, plainTextFromRichText, inputClasses } from '../../../components/ui';
 import { engagementApi } from '../../../lib/api/engagement';
@@ -37,6 +37,7 @@ export default function MemberOpportunitiesPanel() {
   const [hours, setHours] = useState({ activityDate: new Date().toISOString().slice(0, 10), hours: '1', description: '' });
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
+  const openedDeepLink = useRef<string | null>(null);
 
   const load = async () => {
     const [suggestions, applications, saved] = await Promise.all([opportunitiesApi.getMatched(), opportunitiesApi.getMine(), engagementApi.getSaved()]);
@@ -44,6 +45,16 @@ export default function MemberOpportunitiesPanel() {
     setSavedIds(new Set((saved.data ?? []).filter((item) => item.entityType === 'Opportunity').map((item) => item.entityId)));
   };
   useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    const requestedId = new URLSearchParams(window.location.search).get('opportunity');
+    if (!requestedId || openedDeepLink.current === requestedId || matches.length === 0) return;
+    const requested = matches.find((item) => item.opportunity.id === requestedId)?.opportunity;
+    openedDeepLink.current = requestedId;
+    if (requested) {
+      setFilter('Job');
+      setSelected(requested);
+    }
+  }, [matches]);
   const applied = useMemo(() => new Set(mine.map((item) => item.opportunityId)), [mine]);
   const visible = filter === 'All' ? matches : matches.filter((item) => item.opportunity.type === filter);
   const typeLabel = (type: Opportunity['type']) => ({ Volunteer: en ? 'Volunteering' : 'Bénévolat', Job: en ? 'Job' : 'Emploi', Training: 'Formation', Business: en ? 'Business' : 'Affaires', Community: en ? 'Community' : 'Communauté' })[type];

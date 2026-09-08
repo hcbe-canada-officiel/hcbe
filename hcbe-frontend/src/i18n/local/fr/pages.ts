@@ -294,6 +294,12 @@ export default {
   'public.engagement.page.cards.consultations.features.surveys': 'Sondages réguliers',
   'public.engagement.page.cards.consultations.features.public': 'Consultations publiques',
   'public.engagement.page.cards.consultations.features.feedback': 'Feedback communautaire',
+  'public.engagement.page.cards.jobs.title': 'Emplois communautaires',
+  'public.engagement.page.cards.jobs.description': 'Consultez les postes publiés par le HCBE et les organisations de confiance du réseau.',
+  'public.engagement.page.cards.jobs.stats': 'Des talents en mouvement',
+  'public.engagement.page.cards.jobs.features.public': 'Consultation publique',
+  'public.engagement.page.cards.jobs.features.search': 'Recherche par lieu et compétence',
+  'public.engagement.page.cards.jobs.features.tracking': 'Candidatures suivies dans l’espace membre',
   'public.engagement.page.cards.explore': 'Explorer cette section',
   'public.engagement.page.cta.title': 'Prêt à Vous Engager ?',
   'public.engagement.page.cta.subtitle':

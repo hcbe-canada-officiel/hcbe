@@ -18,6 +18,15 @@ const starts = (path: string) => (pathname: string) => pathname.startsWith(path)
 
 const guides: PageGuide[] = [
   {
+    match: exact('/emplois'),
+    title: { fr: 'Consulter les emplois', en: 'Browse community jobs' },
+    description: { fr: 'Les offres publiées sont visibles par tous; une adhésion gratuite est requise pour postuler.', en: 'Published jobs are visible to everyone; free membership is required to apply.' },
+    points: {
+      fr: ['Recherchez par poste, employeur, région ou compétence.', 'Ouvrez les détails pour consulter le profil recherché.', 'Connectez-vous à l’espace membre pour transmettre et suivre votre candidature.'],
+      en: ['Search by position, employer, region, or skill.', 'Open the details to review the candidate profile.', 'Sign in to the member portal to submit and track your application.'],
+    },
+  },
+  {
     match: starts('/actualites/evenements/'),
     title: { fr: 'Comprendre cette activité', en: 'About this activity' },
     description: { fr: 'Cette fiche rassemble tout ce qu’il faut savoir avant de participer.', en: 'This page brings together everything you need before taking part.' },

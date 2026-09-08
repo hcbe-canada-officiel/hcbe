@@ -15,6 +15,7 @@ const PaymentThankYouPage = lazy(() => import('../pages/paiement/merci/page'));
 const MembershipVerificationPage = lazy(() => import('../pages/adhesion/verifier/page'));
 const TicketOrderPage = lazy(() => import('../pages/billets/commande/[token]/page'));
 const CommunityResourcesPage = lazy(() => import('../pages/communaute/ressources/page'));
+const JobsPage = lazy(() => import('../pages/emplois/page'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 
 // Engagement sub-pages
@@ -196,6 +197,10 @@ const routes: RouteObject[] = [
   {
     path: '/communaute/ressources',
     element: <CommunityResourcesPage />,
+  },
+  {
+    path: '/emplois',
+    element: <JobsPage />,
   },
   {
     path: '/contact',

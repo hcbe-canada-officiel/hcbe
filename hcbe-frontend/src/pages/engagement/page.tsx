@@ -46,6 +46,19 @@ const EngagementPage = () => {
       path: '/engagement/consultations',
       icon: 'ri-chat-poll-line',
     },
+    {
+      id: 4,
+      titleKey: 'public.engagement.page.cards.jobs.title',
+      descriptionKey: 'public.engagement.page.cards.jobs.description',
+      statsKey: 'public.engagement.page.cards.jobs.stats',
+      featureKeys: [
+        'public.engagement.page.cards.jobs.features.public',
+        'public.engagement.page.cards.jobs.features.search',
+        'public.engagement.page.cards.jobs.features.tracking',
+      ],
+      path: '/emplois',
+      icon: 'ri-briefcase-4-line',
+    },
   ];
 
   return (
