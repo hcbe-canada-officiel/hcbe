@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { communityMarketplaceApi } from '../../lib/api/community-marketplace';
 import type { AdvertisingCampaign } from '../../lib/api/types';
@@ -8,24 +8,30 @@ import { localized, localizedOptional } from '../../lib/i18n/localized';
 type CommunityAdSlotProps = {
   placement: string;
   className?: string;
+  emptyFallback?: ReactNode;
 };
 
-export function CommunityAdSlot({ placement, className = '' }: CommunityAdSlotProps) {
+export function CommunityAdSlot({ placement, className = '', emptyFallback }: CommunityAdSlotProps) {
   const { i18n } = useTranslation();
   const french = i18n.language.startsWith('fr');
   const [ads, setAds] = useState<AdvertisingCampaign[]>([]);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     let active = true;
+    setIsReady(false);
+    setAds([]);
     void communityMarketplaceApi.getAds(placement, french ? 'fr' : 'en')
       .then((response) => {
         if (active && response.data) setAds(response.data);
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => { if (active) setIsReady(true); });
     return () => { active = false; };
   }, [placement, french]);
 
-  if (!ads.length) return null;
+  if (!isReady) return null;
+  if (!ads.length) return emptyFallback ? <>{emptyFallback}</> : null;
   const single = ads.length === 1;
 
   return (

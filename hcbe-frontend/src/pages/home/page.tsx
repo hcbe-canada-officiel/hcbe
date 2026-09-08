@@ -9,7 +9,7 @@ import RecentAnnouncementsSection from './components/RecentAnnouncementsSection'
 import DocumentsSection from './components/DocumentsSection';
 import CTASection from './components/CTASection';
 import { Reveal } from '../../components/ui';
-import { CommunityAdSlot } from '../../components/feature/CommunityAdSlot';
+import CommunitySpotlightSection from './components/CommunitySpotlightSection';
 
 const HomePage = () => {
   return (
@@ -17,21 +17,21 @@ const HomePage = () => {
       <Navbar />
       <main>
         <HeroSection />
-        <PartnersMarquee />
         <MissionVisionSection />
         <Reveal>
-          <ZonesSection />
+          <CommunitySpotlightSection />
         </Reveal>
         <Reveal>
           <UpcomingEventsSection />
         </Reveal>
         <Reveal>
-          <div className="container-page py-8">
-            <CommunityAdSlot placement="Homepage" />
-          </div>
+          <RecentAnnouncementsSection />
         </Reveal>
         <Reveal>
-          <RecentAnnouncementsSection />
+          <ZonesSection />
+        </Reveal>
+        <Reveal>
+          <PartnersMarquee />
         </Reveal>
         <Reveal>
           <DocumentsSection />

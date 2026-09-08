@@ -2,16 +2,24 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test('public home page renders the application shell', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('i18nextLng', 'fr'));
   await page.goto('/');
 
   await expect(page).toHaveTitle(/HCBE Canada/i);
   await expect(page.locator('#root')).toBeVisible();
   await expect(page.locator('body')).not.toHaveText(/unexpected application error/i);
+  await expect(page.getByRole('heading', { name: /votre communauté burkinabè/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /toute votre communauté, au même endroit/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /événements et billetterie/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /entreprises qui font vivre notre communauté/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /faire connaître mon activité/i }).first()).toBeVisible();
 
   const contactCta = page.getByRole('link', { name: /écrire au hcbe|write to hcbe/i });
   await expect(contactCta).toBeVisible();
   await expect(contactCta).toHaveCSS('background-color', 'rgb(255, 255, 255)');
   await expect(contactCta).toHaveCSS('color', 'rgb(0, 59, 27)');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
   if (process.env.E2E_CAPTURE_VISUALS) await page.getByTestId('home-cta').screenshot({ path: 'test-results/home-contact-cta.png' });
 });
 
