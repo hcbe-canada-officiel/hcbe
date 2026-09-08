@@ -11,7 +11,6 @@ import CookieConsent from "./components/feature/CookieConsent";
 import { CmsContentProvider } from "./contexts/CmsContentContext";
 import AccessibilityNavigation from "./components/AccessibilityNavigation";
 import PwaExperience from "./components/feature/PwaExperience";
-import PublicPageHelp from "./components/feature/PublicPageHelp";
 import CommunityAiAssistant from "./components/feature/CommunityAiAssistant";
 import SeoManager from "./components/SeoManager";
 import CmsPreviewBanner from "./components/feature/CmsPreviewBanner";
@@ -30,7 +29,6 @@ function App() {
               <ScrollToTop />
               <AppRoutes />
               <CmsPreviewBanner />
-              <PublicPageHelp />
               <CommunityAiAssistant />
               <BackToTopButton />
               <PwaExperience />
