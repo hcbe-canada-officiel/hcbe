@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HcbeLogoMark } from '../brand/HcbeLogo';
 import ThemeToggle from './ThemeToggle';
+import NotificationBell from './NotificationBell';
 import { useAuth } from '../../contexts/AuthContext';
 import { siteContentApi } from '../../lib/api/site-content';
 import type { NavigationItemDto } from '../../lib/api/types';
@@ -134,6 +135,7 @@ const Navbar = () => {
 
   const mainLinks = navLinks.filter((link) => link.path !== '/espace-membre');
   const hasMemberSession = Boolean(user?.memberId);
+  const notificationScope = hasMemberSession ? 'member' : isAdmin ? 'admin' : null;
   const memberCtaLabel = hasMemberSession ? t('public.nav.memberSpace') : t('public.nav.memberAccess');
   const adminDestination = isAdmin ? '/admin/dashboard' : '/admin/login';
   const adminCtaLabel = isAdmin ? t('public.nav.adminSpace') : t('public.nav.adminAccess');
@@ -398,6 +400,7 @@ const Navbar = () => {
         </div>
 
         <div className="hidden shrink-0 items-center xl:flex">
+          {notificationScope && <NotificationBell scope={notificationScope} className="mr-2" />}
           <ThemeToggle className="mr-3" />
           <div className="border-l border-line pl-4">
             <LanguageSwitcher compact />
@@ -411,16 +414,19 @@ const Navbar = () => {
           </Link>
         </div>
 
-        <button
-          type="button"
-          onClick={openMobileMenu}
-          aria-label={t('public.nav.openMenu')}
-          aria-expanded={isMobileMenuOpen}
-          aria-controls="mobile-navigation"
-          className="flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-green/8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green xl:hidden"
-        >
-          <i className="ri-menu-line text-2xl" aria-hidden="true"></i>
-        </button>
+        <div className="flex shrink-0 items-center gap-1 xl:hidden">
+          {notificationScope && <NotificationBell scope={notificationScope} />}
+          <button
+            type="button"
+            onClick={openMobileMenu}
+            aria-label={t('public.nav.openMenu')}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-navigation"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-green/8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green"
+          >
+            <i className="ri-menu-line text-2xl" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
     </header>
     {mobileMenu}

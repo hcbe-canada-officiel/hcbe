@@ -136,6 +136,51 @@ test('public page help launcher stays hidden across public routes', async ({ pag
   }
 });
 
+test('authenticated member receives an accessible notification bell on desktop and mobile', async ({ page }) => {
+  const member = {
+    id: '91919191-9191-9191-9191-919191919191', memberId: '81818181-8181-8181-8181-818181818181',
+    email: 'member@hcbe.invalid', firstName: 'Awa', lastName: 'Membre', isAdmin: false,
+    mustChangePassword: false, mfaEnabled: true,
+  };
+  const notification = {
+    id: '71717171-7171-7171-7171-717171717171', type: 'event', title: 'Nouvel événement',
+    message: 'Les inscriptions sont maintenant ouvertes.', link: '/actualites/evenements', isRead: false,
+    userId: member.id, createdAt: '2026-09-08T18:00:00Z',
+  };
+  await page.addInitScript((user) => {
+    localStorage.setItem('i18nextLng', 'fr');
+    localStorage.setItem('hcbe_token', 'e2e-member-notifications');
+    localStorage.setItem('hcbe_user', JSON.stringify(user));
+  }, member);
+  await page.route('**/api/auth/me', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: member }),
+  }));
+  await page.route('**/api/notifications/unread-count?member=true', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: 1 }),
+  }));
+  await page.route('**/api/notifications?limit=8&member=true', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: [notification] }),
+  }));
+  await page.route('**/api/notifications/mark-all-read?member=true', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ success: true }),
+  }));
+
+  await page.goto('/');
+  const desktopBell = page.getByRole('button', { name: /notifications — 1 notification non lue/i });
+  await expect(desktopBell).toBeVisible();
+  await desktopBell.click();
+  const feed = page.getByRole('dialog', { name: 'Notifications' });
+  await expect(feed).toBeVisible();
+  await expect(feed).toContainText('Nouvel événement');
+  await expect(feed.getByRole('link', { name: /voir toutes les notifications/i })).toHaveAttribute('href', '/espace-membre?section=notifications');
+  await feed.getByRole('button', { name: /tout lire/i }).click();
+  await expect(page.getByRole('button', { name: /^notifications$/i })).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole('button', { name: /^notifications$/i })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});
+
 test('PWA manifest, offline fallback and service worker are production-ready', async ({ page, request }) => {
   const manifestResponse = await request.get('/manifest.webmanifest');
   expect(manifestResponse.ok()).toBeTruthy();
