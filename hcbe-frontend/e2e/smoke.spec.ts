@@ -21,13 +21,30 @@ test('public home page renders the application shell', async ({ page }) => {
   await expect(page.getByRole('link', { name: /faire connaître mon activité/i }).first()).toBeVisible();
   await expect(page.getByTestId('public-page-help-button')).toHaveCount(0);
 
+  const hero = page.getByTestId('home-hero-carousel');
+  const quickActions = page.getByTestId('home-quick-actions');
+  await expect(hero).toBeVisible();
+  await expect(quickActions).toBeVisible();
+  const heroBox = await hero.boundingBox();
+  const quickActionsBox = await quickActions.boundingBox();
+  expect(quickActionsBox!.y).toBeGreaterThan(heroBox!.y + heroBox!.height - 80);
+
   const contactCta = page.getByRole('link', { name: /écrire au hcbe|write to hcbe/i });
   await expect(contactCta).toBeVisible();
   await expect(contactCta).toHaveCSS('background-color', 'rgb(255, 255, 255)');
   await expect(contactCta).toHaveCSS('color', 'rgb(0, 59, 27)');
   await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
-  if (process.env.E2E_CAPTURE_VISUALS) await page.getByTestId('home-cta').screenshot({ path: 'test-results/home-contact-cta.png' });
+  const mobileHeroBox = await hero.boundingBox();
+  const mobileQuickActionsBox = await quickActions.boundingBox();
+  expect(mobileQuickActionsBox!.y).toBeGreaterThan(mobileHeroBox!.y + mobileHeroBox!.height - 80);
+  expect(mobileQuickActionsBox!.height).toBeLessThan(300);
+  if (process.env.E2E_CAPTURE_VISUALS) {
+    const privacyConsent = page.getByRole('button', { name: /accepter et continuer|accept and continue/i });
+    if (await privacyConsent.isVisible()) await privacyConsent.click();
+    await page.screenshot({ path: 'test-results/home-mobile-hero.png' });
+    await page.getByTestId('home-cta').screenshot({ path: 'test-results/home-contact-cta.png' });
+  }
 });
 
 test('bilingual HCBE assistant discloses AI use and cites approved sources', async ({ page }) => {

@@ -35,7 +35,8 @@ export const HeroCarousel = ({ slides, children }: HeroCarouselProps) => {
 
   return (
     <section
-      className="relative isolate flex min-h-[570px] flex-col overflow-hidden bg-green-deep md:min-h-[650px]"
+      className="relative isolate flex min-h-[590px] flex-col overflow-hidden bg-green-deep md:min-h-[650px]"
+      data-testid="home-hero-carousel"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -53,9 +54,9 @@ export const HeroCarousel = ({ slides, children }: HeroCarouselProps) => {
         />
       ))}
 
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#001f11]/95 via-[#002c19]/72 to-[#00180b]/15" aria-hidden="true"></div>
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#001b0e]/70 via-transparent to-[#001b0e]/15" aria-hidden="true"></div>
-      <div className="public-grid-pattern pointer-events-none absolute inset-y-0 left-0 w-[56%] opacity-25" aria-hidden="true"></div>
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#001f11]/92 via-[#002c19]/58 to-transparent" aria-hidden="true"></div>
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#001b0e]/45 via-transparent to-[#001b0e]/10" aria-hidden="true"></div>
+      <div className="public-grid-pattern pointer-events-none absolute inset-y-0 left-0 w-[48%] opacity-20" aria-hidden="true"></div>
 
       <div className={`hero-content relative z-10 flex flex-1 items-center ${mounted ? 'is-visible' : ''}`}>
         {children}

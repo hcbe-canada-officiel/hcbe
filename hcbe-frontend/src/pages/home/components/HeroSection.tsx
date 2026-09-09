@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Button, ArrowLink, PageHeader, StatBar, Reveal } from '../../../components/ui';
+import { Button, ArrowLink, StatBar, Reveal } from '../../../components/ui';
 import { HeroCarousel } from '../../../components/feature/HeroCarousel';
 import heroPhoto from '../../../assets/hero/hero-1.jpg';
 import heroAssemblee from '../../../assets/hero/hero-2-assemblee.jpg';
@@ -49,53 +49,64 @@ const HeroSection = () => {
   return (
     <>
       <HeroCarousel slides={heroSlides}>
-        <PageHeader
-          bare
-          variant="hero"
-          immersive
-          align="left"
-          title={t('public.home.hero.title')}
-          description={t('public.home.hero.subtitle')}
-          actions={
-            <>
+        <div className="container-page flex w-full flex-col justify-center py-16 sm:py-20 md:py-24">
+          <div className="max-w-[760px]">
+            <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/25 bg-black/15 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur-md">
+              <span className="h-1.5 w-1.5 rounded-full bg-gold" aria-hidden="true" />
+              HCBE Canada
+            </span>
+            <h1 className="hero-title max-w-4xl font-display text-[40px] font-bold leading-[1.02] tracking-[-0.035em] text-white sm:text-[48px] md:text-[64px] lg:text-[72px]">
+              {t('public.home.hero.title')}
+            </h1>
+            <p className="hero-standfirst mt-6 max-w-2xl border-l-2 border-gold pl-5 text-[16px] leading-7 text-white/85 sm:text-[18px]">
+              {t('public.home.hero.subtitle')}
+            </p>
+            <div className="hero-actions mt-8 flex flex-wrap items-center gap-5">
               <Button to="/services" variant="primary">
                 {t('public.home.hero.cta.services')}
               </Button>
               <ArrowLink to="/espace-membre" tone="gold">
                 {t('public.home.hero.cta.member')}
               </ArrowLink>
-            </>
-          }
-          aside={
-            <aside className="rounded-[26px] border border-white/15 bg-[#052f1d]/80 p-4 shadow-[0_24px_70px_rgba(0,0,0,.25)] backdrop-blur-xl sm:p-5" aria-label={t('public.home.hero.quick.title')}>
-              <div className="flex items-center justify-between gap-4 px-2 pb-4">
-                <div>
-                  <p className="text-[9px] font-bold uppercase tracking-[.2em] text-gold">{t('public.home.hero.quick.eyebrow')}</p>
-                  <h2 className="mt-2 font-display text-[22px] font-bold leading-tight text-white">{t('public.home.hero.quick.title')}</h2>
-                </div>
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gold/30 bg-gold/10 text-xl text-gold" aria-hidden="true">
-                  <i className="ri-compass-3-line" />
-                </span>
-              </div>
-              <nav className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2" aria-label={t('public.home.hero.quick.title')}>
-                {quickActions.map((action) => (
-                  <Link
-                    key={action.to}
-                    to={action.to}
-                    className="group flex min-h-[68px] items-center gap-3 rounded-[16px] border border-white/10 bg-white/[.075] px-4 py-3 text-left text-[12px] font-semibold leading-4 text-white transition duration-200 hover:border-gold/55 hover:bg-white/[.13] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-                  >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-lg text-gold transition group-hover:bg-gold group-hover:text-green-deep" aria-hidden="true">
-                      <i className={action.icon} />
-                    </span>
-                    <span>{action.label}</span>
-                    <i className="ri-arrow-right-up-line ml-auto text-base text-white/45 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-gold" aria-hidden="true" />
-                  </Link>
-                ))}
-              </nav>
-            </aside>
-          }
-        />
+            </div>
+          </div>
+        </div>
       </HeroCarousel>
+
+      <div className="container-page relative z-20 -mt-7 sm:-mt-9" data-testid="home-quick-actions">
+        <aside
+          className="grid overflow-hidden rounded-[26px] border border-line/80 bg-surface shadow-[0_24px_65px_rgba(0,59,27,.14)] lg:grid-cols-[250px_1fr]"
+          aria-label={t('public.home.hero.quick.title')}
+        >
+          <div className="flex items-center gap-3 border-b border-line/70 px-5 py-4 lg:border-b-0 lg:border-r lg:px-6">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-green-deep text-xl text-gold shadow-[0_8px_22px_rgba(0,59,27,.18)]" aria-hidden="true">
+              <i className="ri-compass-3-line" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-[.2em] text-gold-ink">{t('public.home.hero.quick.eyebrow')}</p>
+              <h2 className="mt-1 font-display text-[17px] font-bold leading-tight text-green-deep">{t('public.home.hero.quick.title')}</h2>
+            </div>
+          </div>
+
+          <nav className="grid grid-cols-2 gap-px bg-line/70 sm:grid-cols-4" aria-label={t('public.home.hero.quick.title')}>
+            {quickActions.map((action, index) => (
+              <Link
+                key={action.to}
+                to={action.to}
+                className="group relative flex min-h-[92px] items-center gap-3 overflow-hidden bg-surface px-4 py-4 text-left transition-colors hover:bg-green/[.055] focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-green sm:min-h-[104px] sm:px-5"
+              >
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] text-lg transition-transform duration-200 group-hover:-translate-y-0.5 ${index === 1 ? 'bg-gold text-green-deep' : 'bg-green/[.09] text-green'}`} aria-hidden="true">
+                  <i className={action.icon} />
+                </span>
+                <span className="min-w-0 text-[11px] font-bold leading-4 text-ink sm:text-[12px]">{action.label}</span>
+                <i className="ri-arrow-right-up-line ml-auto shrink-0 text-base text-ink-variant/50 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-green" aria-hidden="true" />
+                <span className="absolute right-3 top-2 font-mono text-[9px] text-ink-variant/35" aria-hidden="true">0{index + 1}</span>
+              </Link>
+            ))}
+          </nav>
+        </aside>
+      </div>
+
       <Reveal>
         <StatBar
           items={[
