@@ -1,23 +1,40 @@
 import canadaFlag from '../../assets/flags/canada.png';
 
-type HcbeLogoSize = 'sm' | 'md' | 'lg';
+type HcbeLogoSize = 'xs' | 'sm' | 'md' | 'lg';
 
 const wordmarkSize: Record<HcbeLogoSize, string> = {
+  xs: 'text-[13px]',
   sm: 'text-[15px]',
   md: 'text-[19px]',
   lg: 'text-[23px]',
 };
 
 const burkinaFlagSize: Record<HcbeLogoSize, string> = {
+  xs: 'h-3.5 w-[21px]',
   sm: 'h-4 w-6',
   md: 'h-5 w-[30px]',
   lg: 'h-6 w-9',
 };
 
 const canadaFlagSize: Record<HcbeLogoSize, string> = {
+  xs: 'h-3.5 w-7',
   sm: 'h-4 w-8',
   md: 'h-5 w-10',
   lg: 'h-6 w-12',
+};
+
+const logoGap: Record<HcbeLogoSize, string> = {
+  xs: 'gap-1.5',
+  sm: 'gap-2.5',
+  md: 'gap-2.5',
+  lg: 'gap-2.5',
+};
+
+const diamondSpacing: Record<HcbeLogoSize, string> = {
+  xs: 'mx-1',
+  sm: 'mx-1.5',
+  md: 'mx-1.5',
+  lg: 'mx-1.5',
 };
 
 const BurkinaFlag = ({ className }: { className: string }) => (
@@ -42,13 +59,13 @@ interface HcbeLogoMarkProps {
 }
 
 export const HcbeLogoMark = ({ size = 'md', tone = 'light', className = '' }: HcbeLogoMarkProps) => (
-  <span className={`inline-flex shrink-0 items-center gap-2.5 ${className}`}>
+  <span className={`inline-flex shrink-0 items-center ${logoGap[size]} ${className}`}>
     <span className="overflow-hidden rounded-[3px] shadow-[0_1px_3px_rgba(0,0,0,.14)] ring-1 ring-black/10">
       <BurkinaFlag className={`${burkinaFlagSize[size]} block`} />
     </span>
     <span className={`inline-flex items-baseline whitespace-nowrap font-sans font-bold leading-none ${wordmarkSize[size]}`}>
       <span className={`tracking-[-0.035em] ${tone === 'dark' ? 'text-white' : 'text-green-deep'}`}>HCBE</span>
-      <span className="mx-1.5 self-center text-[0.52em] text-gold" aria-hidden="true">◆</span>
+      <span className={`${diamondSpacing[size]} self-center text-[0.52em] text-gold`} aria-hidden="true">◆</span>
       <span className={`tracking-[-0.025em] ${tone === 'dark' ? 'text-white/90' : 'text-red-link'}`}>Canada</span>
     </span>
     <span className="overflow-hidden rounded-[3px] shadow-[0_1px_3px_rgba(0,0,0,.14)] ring-1 ring-black/10">

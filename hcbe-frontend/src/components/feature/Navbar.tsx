@@ -140,6 +140,7 @@ const Navbar = () => {
   const adminDestination = isAdmin ? '/admin/dashboard' : '/admin/login';
   const adminCtaLabel = isAdmin ? t('public.nav.adminSpace') : t('public.nav.adminAccess');
   const showInstalledAppBack = isInstalledApp && location.pathname !== '/';
+  const useCompactInstalledHeader = showInstalledAppBack && Boolean(notificationScope);
   const goBackInInstalledApp = () => {
     const historyIndex = Number(window.history.state?.idx ?? 0);
     if (historyIndex > 0) {
@@ -331,21 +332,29 @@ const Navbar = () => {
   return (
     <>
     <header className="sticky top-0 z-50 border-b border-line/50 bg-surface/90 shadow-[0_8px_30px_rgba(0,59,27,.055)] backdrop-blur-xl">
-      <div className="mx-auto flex h-[76px] w-full max-w-[1440px] items-center justify-between px-margin-mobile md:px-margin-desktop">
-        <div className="flex min-w-0 items-center gap-2.5">
+      <div className="mx-auto flex h-[76px] w-full max-w-[1440px] items-center justify-between px-3 min-[360px]:px-margin-mobile md:px-margin-desktop">
+        <div className="flex min-w-0 items-center gap-1.5 min-[360px]:gap-2.5">
           {showInstalledAppBack && (
             <button
               type="button"
               onClick={goBackInInstalledApp}
               aria-label={t('public.nav.back')}
               title={t('public.nav.back')}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-green-deep shadow-[0_5px_18px_rgba(0,59,27,.08)] transition-all hover:-translate-x-0.5 hover:border-green/40 hover:bg-green/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green xl:hidden"
+              data-testid="installed-app-back"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-green-deep shadow-[0_5px_18px_rgba(0,59,27,.08)] transition-all hover:-translate-x-0.5 hover:border-green/40 hover:bg-green/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green min-[360px]:h-11 min-[360px]:w-11 xl:hidden"
             >
               <i className="ri-arrow-left-line text-xl" aria-hidden="true" />
             </button>
           )}
-          <Link to="/" className="flex min-w-0 shrink-0 items-center">
-            <HcbeLogoMark size="md" className="max-[380px]:scale-[.9] max-[380px]:origin-left" />
+          <Link to="/" data-testid="navbar-brand" className="flex min-w-0 shrink-0 items-center">
+            {useCompactInstalledHeader ? (
+              <>
+                <HcbeLogoMark size="xs" className="min-[360px]:hidden" />
+                <HcbeLogoMark size="sm" className="hidden min-[360px]:inline-flex" />
+              </>
+            ) : (
+              <HcbeLogoMark size="md" className="max-[380px]:scale-[.9] max-[380px]:origin-left" />
+            )}
           </Link>
         </div>
 
@@ -414,7 +423,7 @@ const Navbar = () => {
           </Link>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1 xl:hidden">
+        <div data-testid="navbar-mobile-actions" className="flex shrink-0 items-center gap-1 xl:hidden">
           {notificationScope && <NotificationBell scope={notificationScope} />}
           <button
             type="button"
@@ -422,7 +431,7 @@ const Navbar = () => {
             aria-label={t('public.nav.openMenu')}
             aria-expanded={isMobileMenuOpen}
             aria-controls="mobile-navigation"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-green/8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-green/8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green min-[360px]:h-11 min-[360px]:w-11"
           >
             <i className="ri-menu-line text-2xl" aria-hidden="true"></i>
           </button>

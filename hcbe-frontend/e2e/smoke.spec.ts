@@ -148,6 +148,7 @@ test('authenticated member receives an accessible notification bell on desktop a
     userId: member.id, createdAt: '2026-09-08T18:00:00Z',
   };
   await page.addInitScript((user) => {
+    Object.defineProperty(navigator, 'standalone', { configurable: true, value: true });
     localStorage.setItem('i18nextLng', 'fr');
     localStorage.setItem('hcbe_token', 'e2e-member-notifications');
     localStorage.setItem('hcbe_user', JSON.stringify(user));
@@ -179,6 +180,24 @@ test('authenticated member receives an accessible notification bell on desktop a
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('button', { name: /^notifications$/i })).toBeVisible();
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+
+  await page.goto('/contact');
+  await expect(page.getByTestId('installed-app-back')).toBeVisible();
+  const brandBox = await page.getByTestId('navbar-brand').boundingBox();
+  const bellBox = await page
+    .getByRole('button', { name: /^notifications(?: —|$)/i })
+    .boundingBox();
+  expect(brandBox).not.toBeNull();
+  expect(bellBox).not.toBeNull();
+  expect(brandBox!.x + brandBox!.width).toBeLessThanOrEqual(bellBox!.x);
+
+  await page.setViewportSize({ width: 320, height: 700 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+  const narrowBrandBox = await page.getByTestId('navbar-brand').boundingBox();
+  const narrowBellBox = await page
+    .getByRole('button', { name: /^notifications(?: —|$)/i })
+    .boundingBox();
+  expect(narrowBrandBox!.x + narrowBrandBox!.width).toBeLessThanOrEqual(narrowBellBox!.x);
 });
 
 test('an administrator refresh cookie restores access from the login page', async ({ page }) => {
