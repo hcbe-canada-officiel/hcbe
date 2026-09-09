@@ -581,6 +581,92 @@ test('administrator document registry is searchable, bilingual and responsive', 
   expect(results.violations).toEqual([]);
 });
 
+test('administrator activity, event and member registries are polished and responsive', async ({ page }) => {
+  const admin = {
+    id: '77777777-7777-7777-7777-777777777777', email: 'operations@hcbe.invalid', firstName: 'Awa', lastName: 'Traoré',
+    isAdmin: true, mustChangePassword: false, adminRole: 'super-admin', permissions: [], mfaEnabled: true,
+  };
+  const auditUserId = '11111111-1111-1111-1111-111111111111';
+  await page.addInitScript((user) => {
+    localStorage.setItem('i18nextLng', 'fr');
+    localStorage.setItem('hcbe_token', 'e2e-operations-token');
+    localStorage.setItem('hcbe_user', JSON.stringify(user));
+  }, admin);
+  await page.route('**/api/auth/me', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: admin }),
+  }));
+  await page.route('**/api/admin/audit-logs**', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({
+      success: true,
+      data: {
+        items: [{ id: 'audit-1', userId: auditUserId, userEmail: 'membre@hcbe.invalid', action: 'Modified', entityType: 'Member', entityId: 'member-1', createdAtUtc: '2026-09-09T15:30:00Z' }],
+        total: 1, page: 1, pageSize: 25, totalPages: 1,
+        stats: { eventsToday: 1, activeActors: 1, securityEvents: 0, retentionDays: 730 },
+        filters: { actions: ['Modified'], entityTypes: ['Member'] },
+        relatedUsers: { [auditUserId]: { displayName: 'Fatou Sawadogo', email: 'membre@hcbe.invalid' } },
+      },
+    }),
+  }));
+  await page.route(/\/api\/event-categories(?:\/|\?|$)/, (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: [] }),
+  }));
+  await page.route('**/api/events/admin', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({
+      success: true,
+      data: [{
+        id: 'event-1', title: 'Forum communautaire', titleEn: 'Community forum', description: '<p>Rencontre annuelle.</p>',
+        date: '2026-09-15T18:00:00Z', timeZone: 'America/Toronto', location: 'Montréal', locationEn: 'Montreal',
+        type: 'Community', format: 'InPerson', status: 'Published', createdAt: '2026-08-01T12:00:00Z', updatedAt: '2026-08-01T12:00:00Z',
+        speakers: [], organizers: [], registrationMode: 'Native', allowWaitlist: true, restrictMeetingLinkToRegistrants: false,
+        confirmedRegistrationCount: 18, waitlistCount: 3, ticketingEnabled: false, salesModel: 'HCBE', platformFeePercent: 0,
+      }],
+    }),
+  }));
+  await page.route('**/api/members/admin/paged**', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({
+      success: true,
+      data: {
+        items: [{ id: 'member-1', firstName: 'Fatou', lastName: 'Sawadogo', email: 'membre@hcbe.invalid', city: 'Montréal', province: 'QC', profession: 'Ingénieure', isAdmin: false, createdAt: '2026-08-10T12:00:00Z' }],
+        page: 1, pageSize: 15, totalItems: 1, totalPages: 1,
+      },
+    }),
+  }));
+
+  await page.goto('/admin/activity-logs');
+  await expect(page.getByRole('heading', { level: 1, name: /journal des activités/i })).toBeVisible();
+  await expect(page.getByText('Fatou Sawadogo').first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /ouvrir le calendrier/i })).toHaveCount(2);
+  await expect(page.getByRole('button', { name: /7 jours/i })).toBeVisible();
+  if (process.env.E2E_CAPTURE_VISUALS) await page.screenshot({ path: 'test-results/admin-activity-desktop.png', fullPage: true });
+
+  await page.goto('/admin/events');
+  await expect(page.getByRole('heading', { level: 1, name: /gestion des événements/i })).toBeVisible();
+  await expect(page.getByText('Forum communautaire')).toBeVisible();
+  await expect(page.getByText(/18/).first()).toBeVisible();
+  await page.locator('#event-search').fill('forum');
+  if (process.env.E2E_CAPTURE_VISUALS) await page.screenshot({ path: 'test-results/admin-events-desktop.png', fullPage: true });
+
+  await page.goto('/admin/members');
+  await expect(page.getByRole('heading', { level: 1, name: /membres diaspora/i })).toBeVisible();
+  await expect(page.getByText('Fatou Sawadogo')).toBeVisible();
+  await expect(page.getByText('Ingénieure')).toBeVisible();
+  if (process.env.E2E_CAPTURE_VISUALS) await page.screenshot({ path: 'test-results/admin-members-desktop.png', fullPage: true });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const route of ['/admin/activity-logs', '/admin/events', '/admin/members']) {
+    await page.goto(route);
+    await expect(page.locator('main h1')).toBeVisible();
+    await page.waitForTimeout(350);
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+    if (process.env.E2E_CAPTURE_VISUALS) await page.screenshot({ path: `test-results/${route.split('/').pop()}-mobile.png`, fullPage: true });
+  }
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+    .exclude('[aria-hidden="true"]')
+    .analyze();
+  expect(results.violations).toEqual([]);
+});
+
 test('administrator help centre is searchable, shareable, accessible and responsive', async ({ page }) => {
   const admin = {
     id: '99999999-9999-9999-9999-999999999999', email: 'guide@hcbe.invalid', firstName: 'Awa', lastName: 'Guide',

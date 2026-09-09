@@ -6,6 +6,7 @@ import { aiApi } from '../../lib/api/ai';
 const allowedElements = ['p', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'strong', 'em', 'blockquote', 'a', 'hr', 'br', 'code'];
 
 export const plainTextFromRichText = (value: string) => value
+  .replace(/<[^>]*>/g, ' ')
   .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
   .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
   .replace(/^\s{0,3}(#{1,6}|>|[-+*]|\d+[.)])\s+/gm, '')

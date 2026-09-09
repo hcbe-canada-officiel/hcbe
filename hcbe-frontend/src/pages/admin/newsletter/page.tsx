@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { newsletterApi } from '../../../lib/api/newsletter';
 import { associationsApi } from '../../../lib/api/associations';
 import type { Association, CampaignAudiencePreviewDto, CampaignDeliveryDto, CommunicationConsentEventDto, CreateNewsletterCampaignRequest, NewsletterCampaignDto, NewsletterSubscriptionDto } from '../../../lib/api/types';
-import { Button, DataTable, EmptyState, Field, RichTextEditor, StatusChip, Td, inputClasses } from '../../../components/ui';
+import { Button, CalendarInput, DataTable, EmptyState, Field, RichTextEditor, StatusChip, Td, inputClasses } from '../../../components/ui';
 import { AdminPageHeader } from '../../../components/admin/AdminPageHeader';
 import { AdminStatCard } from '../../../components/admin/AdminStatCard';
 
@@ -412,7 +412,7 @@ const NewsletterAdminPage: React.FC = () => {
                 <RichTextEditor id="campaign-body-en" value={campaignForm.bodyEn ?? ''} onChange={(bodyEn) => setCampaignForm({ ...campaignForm, bodyEn })} minHeight={200} />
               </Field>
               <Field label={t('admin.newsletter.schedule')} htmlFor="campaign-schedule">
-                <input id="campaign-schedule" type="datetime-local" className={inputClasses} value={campaignForm.scheduledAtUtc ? new Date(campaignForm.scheduledAtUtc).toISOString().slice(0, 16) : ''} onChange={(e) => setCampaignForm({ ...campaignForm, scheduledAtUtc: e.target.value ? new Date(e.target.value).toISOString() : undefined })} />
+                <CalendarInput id="campaign-schedule" type="datetime-local" className={inputClasses} value={campaignForm.scheduledAtUtc ? new Date(campaignForm.scheduledAtUtc).toISOString().slice(0, 16) : ''} onChange={(e) => setCampaignForm({ ...campaignForm, scheduledAtUtc: e.target.value ? new Date(e.target.value).toISOString() : undefined })} />
               </Field>
               <div className="rounded-2xl border border-green/15 bg-green/[.035] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[9px] font-bold uppercase tracking-[.14em] text-green">{t('admin.newsletter.audiencePreview')}</p><p className="mt-1 text-xs text-ink-variant">{t('admin.newsletter.audiencePreviewHint')}</p></div><Button type="button" variant="tertiary" disabled={previewBusy} onClick={handlePreviewAudience}>{previewBusy ? <i className="ri-loader-4-line animate-spin" /> : <i className="ri-radar-line" />}{t('admin.newsletter.calculateAudience')}</Button></div>

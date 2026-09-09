@@ -6,7 +6,7 @@ import {
   isEnglishContentIncomplete,
 } from '../../../components/admin/AdminLanguageTabs';
 import { AdminFormLayout } from '../../../components/admin/AdminFormLayout';
-import { Button, Field, RichTextEditor, inputClasses } from '../../../components/ui';
+import { Button, CalendarInput, Field, RichTextEditor, inputClasses } from '../../../components/ui';
 import { NEWS_CATEGORIES, getNewsCategoryLabelKey } from '../../../lib/news/category-styles';
 import {
   NEWS_IMAGE_POSITIONS,
@@ -234,7 +234,7 @@ export const NewsForm: React.FC<NewsFormProps> = ({
               </Field>
 
               <Field label={t('admin.news.publishedDate')} htmlFor="publishedDate">
-                <input
+                <CalendarInput
                   type="datetime-local"
                   id="publishedDate"
                   value={formData.publishedDate ? formData.publishedDate.slice(0, 16) : ''}

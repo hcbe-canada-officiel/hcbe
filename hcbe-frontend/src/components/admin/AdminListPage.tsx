@@ -10,6 +10,7 @@ interface AdminListPageProps {
   createLabel?: string;
   createPath?: string;
   toolbar?: ReactNode;
+  summary?: ReactNode;
   columns: { key: string; label: string; align?: 'left' | 'right' }[];
   children: ReactNode;
   isEmpty: boolean;
@@ -31,6 +32,7 @@ export const AdminListPage = ({
   createLabel,
   createPath,
   toolbar,
+  summary,
   columns,
   children,
   isEmpty,
@@ -73,6 +75,8 @@ export const AdminListPage = ({
           </Button>
         ) : undefined}
       />
+
+      {summary}
 
       {toolbar && (
         <div className="admin-panel overflow-hidden">

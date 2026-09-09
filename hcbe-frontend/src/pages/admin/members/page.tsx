@@ -7,6 +7,11 @@ import { AdminListPage } from '../../../components/admin/AdminListPage';
 import { Field, Td, inputClasses } from '../../../components/ui';
 import { MemberDataTools } from '../../../components/admin/MemberDataTools';
 
+const MemberMetric = ({ value, label, icon, tone = 'green' }: { value: number; label: string; icon: string; tone?: 'green' | 'gold' | 'red' }) => {
+  const tones = { green: 'bg-green/9 text-green', gold: 'bg-gold/18 text-gold-ink', red: 'bg-red-link/8 text-red-link' };
+  return <article className="rounded-[18px] border border-line/65 bg-surface p-4 shadow-[0_8px_24px_rgba(0,59,27,.045)]"><div className="flex items-center justify-between gap-4"><div><strong className="block font-display text-[30px] leading-none tabular-nums text-green-deep">{value.toLocaleString()}</strong><span className="mt-2 block text-[9px] font-bold uppercase tracking-[.14em] text-ink-variant">{label}</span></div><span className={`flex h-11 w-11 items-center justify-center rounded-[13px] ${tones[tone]}`}><i className={`${icon} text-lg`} aria-hidden="true" /></span></div></article>;
+};
+
 const MembersPage: React.FC = () => {
   const [members, setMembers] = useState<MemberDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,7 +21,7 @@ const MembersPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const loadMembers = async () => {
     try {
@@ -65,18 +70,22 @@ const MembersPage: React.FC = () => {
     );
   }
 
+  const representedProvinces = new Set(members.map((member) => member.province).filter(Boolean)).size;
+  const profiledMembers = members.filter((member) => Boolean(member.profession || member.expertise)).length;
+  const locale = i18n.language.startsWith('fr') ? 'fr-CA' : 'en-CA';
+
   return (
     <div className="space-y-5">
-    <MemberDataTools onChanged={loadMembers} />
     <AdminListPage
       title={t('admin.members.title')}
       count={error ? undefined : totalItems}
       createLabel={t('admin.members.create')}
       createPath="/admin/members/create"
+      summary={<section className="grid gap-3 sm:grid-cols-3" aria-label={t('admin.members.summaryLabel')}><MemberMetric value={totalItems} label={t('admin.members.statsTotal')} icon="ri-group-line" /><MemberMetric value={representedProvinces} label={t('admin.members.statsProvinces')} icon="ri-map-2-line" tone="gold" /><MemberMetric value={profiledMembers} label={t('admin.members.statsProfiles')} icon="ri-briefcase-4-line" tone="red" /></section>}
       toolbar={(
         <>
           <Field label={t('admin.list.search')} htmlFor="member-search">
-            <input id="member-search" className={inputClasses} value={search} placeholder={t('admin.list.searchPlaceholder')} onChange={(event) => { setSearch(event.target.value); setPage(1); }} />
+            <div className="relative"><i className="ri-search-line pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-variant" aria-hidden="true" /><input id="member-search" className={`${inputClasses} pl-11`} value={search} placeholder={t('admin.members.searchPlaceholder')} onChange={(event) => { setSearch(event.target.value); setPage(1); }} /></div>
           </Field>
           <Field label={t('admin.common.sort')} htmlFor="member-sort">
             <select id="member-sort" className={inputClasses} value={sort} onChange={(event) => { setSort(event.target.value); setPage(1); }}>
@@ -96,6 +105,7 @@ const MembersPage: React.FC = () => {
       ]}
       isEmpty={members.length === 0}
       emptyTitle={t('admin.members.emptyTitle')}
+      emptyDescription={search ? t('admin.members.emptySearch') : t('admin.members.emptyAll')}
       error={error ?? undefined}
       onRetry={loadMembers}
       pagination={{ page, totalPages, totalItems, onPageChange: setPage }}
@@ -103,14 +113,11 @@ const MembersPage: React.FC = () => {
       {members.map((member) => (
         <tr key={member.id} className="transition-colors hover:bg-surface-container">
           <Td className="text-ink">
-            <div className="font-medium">
-              {member.firstName} {member.lastName}
-            </div>
-            <div className="text-ink-variant">{member.email}</div>
+            <div className="flex items-center gap-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green text-[11px] font-bold uppercase text-white">{`${member.firstName?.[0] ?? ''}${member.lastName?.[0] ?? ''}` || 'HC'}</span><div className="min-w-0"><div className="font-semibold">{member.firstName} {member.lastName}</div><div className="mt-0.5 max-w-[260px] truncate text-xs text-ink-variant">{member.email}</div></div></div>
           </Td>
-          <Td>{[member.city, member.province].filter(Boolean).join(', ') || t('admin.common.na')}</Td>
-          <Td>{member.profession || t('admin.common.na')}</Td>
-          <Td>{new Date(member.createdAt).toLocaleDateString()}</Td>
+          <Td><span className="inline-flex items-center gap-1.5"><i className="ri-map-pin-line text-green" aria-hidden="true" />{[member.city, member.province].filter(Boolean).join(', ') || t('admin.common.na')}</span></Td>
+          <Td>{member.profession ? <span className="inline-flex rounded-full border border-green/20 bg-green/5 px-3 py-1 text-xs text-green">{member.profession}</span> : t('admin.common.na')}</Td>
+          <Td><time dateTime={member.createdAt}>{new Date(member.createdAt).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}</time></Td>
           <Td align="right">
             <div className="inline-flex items-center justify-end gap-1">
               <Link
@@ -143,6 +150,7 @@ const MembersPage: React.FC = () => {
         </tr>
       ))}
     </AdminListPage>
+    <MemberDataTools onChanged={loadMembers} />
     </div>
   );
 };

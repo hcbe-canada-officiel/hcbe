@@ -3,7 +3,7 @@ import type { Event } from '../../../lib/api/types';
 import { getPublicationLabel, translateEventLifecycle } from '../../../lib/i18n/adminStatus';
 import { getEventLifecycle } from '../../../lib/events/lifecycle';
 import { AdminListPage } from '../../../components/admin/AdminListPage';
-import { Button, Field, StatusChip, Td, inputClasses } from '../../../components/ui';
+import { Button, Field, StatusChip, Td, inputClasses, plainTextFromRichText } from '../../../components/ui';
 import { getEventCategoryLabel, useEventCategories } from '../../../lib/events/categories';
 import { formatEventDateTime } from '../../../lib/events/timezone';
 
@@ -15,12 +15,22 @@ const eventLifecycleChipStatus = (event: Event): 'published' | 'draft' | 'past' 
   return 'published';
 };
 
+const EventMetric = ({ value, label, icon, accent = 'green' }: { value: number; label: string; icon: string; accent?: 'green' | 'gold' | 'red' }) => {
+  const accents = {
+    green: 'bg-green/9 text-green',
+    gold: 'bg-gold/18 text-gold-ink',
+    red: 'bg-red-link/8 text-red-link',
+  };
+  return <article className="relative overflow-hidden rounded-[18px] border border-line/65 bg-surface p-4 shadow-[0_8px_24px_rgba(0,59,27,.045)]"><div className="flex items-center justify-between gap-4"><div><strong className="block font-display text-[30px] leading-none tabular-nums text-green-deep">{value.toLocaleString()}</strong><span className="mt-2 block text-[9px] font-bold uppercase tracking-[.14em] text-ink-variant">{label}</span></div><span className={`flex h-11 w-11 items-center justify-center rounded-[13px] ${accents[accent]}`}><i className={`${icon} text-lg`} aria-hidden="true" /></span></div></article>;
+};
+
 export const AdminEventsList = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
+  const [search, setSearch] = useState('');
   const { t, i18n } = useTranslation();
   const categories = useEventCategories(true);
 
@@ -72,8 +82,11 @@ export const AdminEventsList = () => {
   ];
 
   const filteredEvents = events.filter((event) => {
-    if (filter === 'all') return true;
-    return getEventLifecycle(event) === filter;
+    if (filter !== 'all' && getEventLifecycle(event) !== filter) return false;
+    const query = search.trim().toLocaleLowerCase(i18n.language);
+    if (!query) return true;
+    return [event.title, event.titleEn, event.location, event.locationEn, event.type]
+      .some((value) => value?.toLocaleLowerCase(i18n.language).includes(query));
   });
 
   const sortedEvents = [...filteredEvents].sort((a, b) => {
@@ -103,12 +116,21 @@ export const AdminEventsList = () => {
       minute: '2-digit',
     });
 
+  const localizedTitle = (event: Event) => i18n.language.startsWith('en') && event.titleEn ? event.titleEn : event.title;
+  const localizedDescription = (event: Event) => i18n.language.startsWith('en') && event.descriptionEn ? event.descriptionEn : event.description;
+  const activeEvents = events.filter((event) => ['upcoming', 'ongoing'].includes(getEventLifecycle(event))).length;
+  const registrations = events.reduce((sum, event) => sum + event.confirmedRegistrationCount, 0);
+  const waitlisted = events.reduce((sum, event) => sum + event.waitlistCount, 0);
+
   const toolbar = (
     <>
       <Button to="/admin/events/categories" variant="secondary">
         <i className="ri-price-tag-3-line" aria-hidden="true" />
         {t('admin.events.categories.manage')}
       </Button>
+      <Field label={t('admin.common.search')} htmlFor="event-search">
+        <div className="relative"><i className="ri-search-line pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-variant" aria-hidden="true" /><input id="event-search" value={search} onChange={(event) => setSearch(event.target.value)} className={`${inputClasses} pl-11`} placeholder={t('admin.events.searchPlaceholder')} /></div>
+      </Field>
       <Field label={t('admin.common.filterBy')} htmlFor="event-filter">
         <select
           id="event-filter"
@@ -154,6 +176,7 @@ export const AdminEventsList = () => {
       count={error ? undefined : sortedEvents.length}
       createLabel={t('admin.events.create')}
       createPath="/admin/events/create"
+      summary={<section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label={t('admin.events.summaryLabel')}><EventMetric value={events.length} label={t('admin.events.statsTotal')} icon="ri-calendar-2-line" /><EventMetric value={activeEvents} label={t('admin.events.statsActive')} icon="ri-calendar-check-line" accent="gold" /><EventMetric value={registrations} label={t('admin.events.statsRegistrations')} icon="ri-group-line" /><EventMetric value={waitlisted} label={t('admin.events.statsWaitlist')} icon="ri-time-line" accent="red" /></section>}
       toolbar={toolbar}
       columns={[
         { key: 'event', label: t('admin.events.colEvent') },
@@ -170,20 +193,21 @@ export const AdminEventsList = () => {
           : t('admin.events.emptyFilter', { filter: currentFilterLabel })
       }
       error={error ?? undefined}
+      onRetry={loadEvents}
     >
       {sortedEvents.map((event) => (
         <tr key={event.id} className="transition-colors hover:bg-surface-container">
           <Td className="text-ink">
-            <div className="font-medium">{event.title}</div>
-            {event.description && (
+            <div className="flex items-start gap-3"><span className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-green text-center text-white"><strong className="text-base leading-none">{new Intl.DateTimeFormat(locale, { day: '2-digit', timeZone: event.timeZone }).format(new Date(event.date))}</strong><span className="mt-1 text-[8px] font-bold uppercase tracking-wide text-gold">{new Intl.DateTimeFormat(locale, { month: 'short', timeZone: event.timeZone }).format(new Date(event.date))}</span></span><div className="min-w-0"><div className="font-semibold">{localizedTitle(event)}</div>
+            {localizedDescription(event) && (
               <div className="mt-1 max-w-xs truncate text-body-md text-ink-variant">
-                {event.description}
+                {plainTextFromRichText(localizedDescription(event) ?? '')}
               </div>
-            )}
+            )}</div></div>
           </Td>
           <Td>
             <div>{formatListDate(event)}</div>
-            {event.location && <div className="text-ink-variant">{event.location}</div>}
+            {event.location && <div className="mt-1 flex items-center gap-1 text-ink-variant"><i className="ri-map-pin-line" aria-hidden="true" />{i18n.language.startsWith('en') && event.locationEn ? event.locationEn : event.location}</div>}
           </Td>
           <Td>
             <div className="space-y-1">
@@ -206,11 +230,7 @@ export const AdminEventsList = () => {
                 {t('admin.common.zone')}: {event.zone}
               </div>
             )}
-            {event.capacity && (
-              <div>
-                {t('admin.common.capacity')}: {event.capacity}
-              </div>
-            )}
+            {event.capacity && <div>{t('admin.common.capacity')}: {event.confirmedRegistrationCount}/{event.capacity}</div>}
           </Td>
           <Td align="right">
             <div className="inline-flex items-center justify-end gap-1">

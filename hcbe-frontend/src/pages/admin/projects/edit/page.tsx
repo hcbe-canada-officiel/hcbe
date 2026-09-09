@@ -6,7 +6,7 @@ import {
   isEnglishContentIncomplete,
 } from '../../../../components/admin/AdminLanguageTabs';
 import { AdminFormLayout } from '../../../../components/admin/AdminFormLayout';
-import { Button, Field, inputClasses, RichTextEditor } from '../../../../components/ui';
+import { Button, CalendarInput, Field, inputClasses, RichTextEditor } from '../../../../components/ui';
 import { projectsApi } from '../../../../lib/api/projects';
 import type { Project, UpdateProjectRequest } from '../../../../lib/api/types';
 
@@ -338,7 +338,7 @@ const EditProjectPage = () => {
                 />
               </Field>
               <Field label="Start Date" htmlFor="startDate">
-                <input
+                <CalendarInput
                   type="date"
                   id="startDate"
                   name="startDate"
@@ -348,7 +348,7 @@ const EditProjectPage = () => {
                 />
               </Field>
               <Field label="End Date" htmlFor="endDate">
-                <input
+                <CalendarInput
                   type="date"
                   id="endDate"
                   name="endDate"

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type DragEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, inputClasses } from '../../../components/ui';
+import { Button, CalendarInput, inputClasses } from '../../../components/ui';
 import { messages } from '../../../i18n/local';
 import { resolveMediaUrl } from '../../../lib/api/media-url';
 import { siteContentApi } from '../../../lib/api/site-content';
@@ -484,7 +484,7 @@ export const CmsContentStudio = () => {
 
             {stored?.isPublished && <div className="mt-5 rounded-xl border border-green/10 bg-green/5 p-4"><p className="text-[9px] font-bold uppercase tracking-[.15em] text-green">{c.current} · v{stored.version}</p><div className="mt-2 grid gap-3 text-xs text-ink-variant sm:grid-cols-2"><p className="line-clamp-3">FR · {stored.publishedValueFr || '—'}</p><p className="line-clamp-3">EN · {stored.publishedValueEn || '—'}</p></div></div>}
 
-            <label className="mt-5 block rounded-xl border border-line bg-canvas/45 p-4"><span className="mb-2 block text-[10px] font-bold uppercase tracking-[.13em] text-ink-variant">{c.schedule}</span><input type="datetime-local" min={new Date().toISOString().slice(0, 16)} className={inputClasses} value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} /></label>
+            <label className="mt-5 block rounded-xl border border-line bg-canvas/45 p-4"><span className="mb-2 block text-[10px] font-bold uppercase tracking-[.13em] text-ink-variant">{c.schedule}</span><CalendarInput type="datetime-local" min={new Date().toISOString().slice(0, 16)} className={inputClasses} value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} /></label>
 
             <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-line pt-5">
               {stored && <button type="button" disabled={busy} onClick={() => void resetOverride()} className="mr-auto inline-flex min-h-11 items-center gap-2 px-1 text-[10px] font-bold uppercase tracking-[.1em] text-error disabled:opacity-40"><i className="ri-reset-left-line" />{c.reset}</button>}

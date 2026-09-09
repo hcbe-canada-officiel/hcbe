@@ -6,6 +6,7 @@ export { PageHeader } from './PageHeader';
 export { StatBar } from './StatBar';
 export { EmptyState } from './EmptyState';
 export { Field, inputClasses } from './Field';
+export { CalendarInput } from './CalendarInput';
 export { DataTable, Td } from './DataTable';
 export { Reveal } from './Reveal';
 export { RichTextEditor, RichTextContent, plainTextFromRichText } from './RichText';

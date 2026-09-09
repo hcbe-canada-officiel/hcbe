@@ -9,7 +9,7 @@ import {
   isEnglishContentIncomplete,
 } from '../admin/AdminLanguageTabs';
 import { AdminFormLayout } from '../admin/AdminFormLayout';
-import { ArrowLink, Button, Field, RichTextEditor, inputClasses } from '../ui';
+import { ArrowLink, Button, CalendarInput, Field, RichTextEditor, inputClasses } from '../ui';
 import { formatFileSize, resolveMediaUrl } from '../../lib/api/media-url';
 import { eventCategoriesApi } from '../../lib/api/event-categories';
 import { communityMarketplaceApi } from '../../lib/api/community-marketplace';
@@ -519,7 +519,7 @@ export const EventForm: React.FC<EventFormProps> = ({
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <Field label={t('admin.events.form.startDate')} htmlFor="date" required error={errors.date}>
-                <input
+                <CalendarInput
                   type="datetime-local"
                   id="date"
                   name="date"
@@ -530,7 +530,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               </Field>
 
               <Field label={t('admin.events.form.endDate')} htmlFor="endDate" error={errors.endDate}>
-                <input
+                <CalendarInput
                   type="datetime-local"
                   id="endDate"
                   name="endDate"
@@ -564,7 +564,7 @@ export const EventForm: React.FC<EventFormProps> = ({
                 htmlFor="registrationDeadline"
                 error={errors.registrationDeadline}
               >
-                <input
+                <CalendarInput
                   type="datetime-local"
                   id="registrationDeadline"
                   name="registrationDeadline"

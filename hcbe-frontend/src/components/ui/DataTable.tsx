@@ -52,7 +52,7 @@ export const DataTable = ({ columns, children }: DataTableProps) => {
             <p className="hidden text-xs text-ink-variant sm:block">{t('admin.list.tableHint')}</p>
           </div>
         </div>
-        <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.12em] text-ink-variant/60 sm:hidden">
+        <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.12em] text-ink-variant sm:hidden">
           {t('admin.list.mobileCards')}
           <i className="ri-layout-row-line" aria-hidden="true" />
         </span>
