@@ -23,11 +23,15 @@ test('public home page renders the application shell', async ({ page }) => {
 
   const hero = page.getByTestId('home-hero-carousel');
   const quickActions = page.getByTestId('home-quick-actions');
+  const statistics = page.getByTestId('home-statistics');
   await expect(hero).toBeVisible();
   await expect(quickActions).toBeVisible();
+  await expect(statistics).toBeVisible();
   const heroBox = await hero.boundingBox();
   const quickActionsBox = await quickActions.boundingBox();
+  const statisticsBox = await statistics.boundingBox();
   expect(quickActionsBox!.y).toBeGreaterThan(heroBox!.y + heroBox!.height - 80);
+  expect(statisticsBox!.y).toBeGreaterThanOrEqual(quickActionsBox!.y + quickActionsBox!.height + 24);
 
   const contactCta = page.getByRole('link', { name: /écrire au hcbe|write to hcbe/i });
   await expect(contactCta).toBeVisible();
@@ -37,8 +41,10 @@ test('public home page renders the application shell', async ({ page }) => {
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
   const mobileHeroBox = await hero.boundingBox();
   const mobileQuickActionsBox = await quickActions.boundingBox();
+  const mobileStatisticsBox = await statistics.boundingBox();
   expect(mobileQuickActionsBox!.y).toBeGreaterThan(mobileHeroBox!.y + mobileHeroBox!.height - 80);
   expect(mobileQuickActionsBox!.height).toBeLessThan(300);
+  expect(mobileStatisticsBox!.y).toBeGreaterThanOrEqual(mobileQuickActionsBox!.y + mobileQuickActionsBox!.height + 32);
   if (process.env.E2E_CAPTURE_VISUALS) {
     const privacyConsent = page.getByRole('button', { name: /accepter et continuer|accept and continue/i });
     if (await privacyConsent.isVisible()) await privacyConsent.click();

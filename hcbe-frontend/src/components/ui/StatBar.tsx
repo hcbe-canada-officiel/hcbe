@@ -2,11 +2,13 @@ import type { ReactNode } from 'react';
 
 interface StatBarProps {
   items: { value: string | ReactNode; label: string }[];
+  overlap?: boolean;
+  testId?: string;
 }
 
-export const StatBar = ({ items }: StatBarProps) => (
-  <section className="relative z-10 bg-background">
-    <div className="container-page -translate-y-8">
+export const StatBar = ({ items, overlap = true, testId }: StatBarProps) => (
+  <section className="relative z-10 bg-background" data-testid={testId}>
+    <div className={`container-page ${overlap ? '-translate-y-8' : ''}`}>
       <div className="grid grid-cols-2 overflow-hidden rounded-[18px] border border-green/10 bg-white shadow-[0_22px_55px_rgba(0,59,27,.13)] md:grid-cols-4">
         {items.map((item, index) => (
           <div key={item.label} className="group relative flex min-h-[116px] flex-col justify-center px-5 py-5 text-left sm:px-7">

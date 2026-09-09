@@ -107,8 +107,10 @@ const HeroSection = () => {
         </aside>
       </div>
 
-      <Reveal>
+      <Reveal className="pt-8 sm:pt-10">
         <StatBar
+          overlap={false}
+          testId="home-statistics"
           items={[
             { value: statisticValue(['provinces', 'provinces_covered'], '11'), label: t('public.home.stats.provinces') },
             { value: statisticValue(['zones', 'zones_covered'], '2'), label: t('public.home.stats.zones') },
