@@ -520,6 +520,67 @@ test('admin login page exposes an accessible sign-in form', async ({ page }) => 
   await expect(page.locator('button[type="submit"]')).toBeEnabled();
 });
 
+test('administrator document registry is searchable, bilingual and responsive', async ({ page }) => {
+  const admin = {
+    id: '88888888-8888-8888-8888-888888888888', email: 'documents@hcbe.invalid', firstName: 'Awa', lastName: 'Archives',
+    isAdmin: true, mustChangePassword: false, adminRole: 'super-admin', permissions: [], mfaEnabled: true,
+  };
+  const documents = [
+    {
+      id: 'doc-1', name: 'Règlement général', description: '<p>Cadre officiel de gouvernance.</p>', icon: 'ri-file-pdf-2-line',
+      type: 'PDF', size: '1.8 MB', pages: '24', category: 'Gouvernance', downloads: 42, isActive: true, displayOrder: 1,
+      createdAt: '2026-08-18T12:00:00Z',
+    },
+    {
+      id: 'doc-2', name: 'Guide administratif', description: '<p>Procédures internes.</p>', icon: 'ri-book-open-line',
+      type: 'PDF', size: '920 KB', pages: '12', category: 'Administration', downloads: 7, isActive: false, displayOrder: 2,
+      createdAt: '2026-08-22T12:00:00Z',
+    },
+  ];
+  await page.addInitScript((user) => {
+    localStorage.setItem('i18nextLng', 'fr');
+    localStorage.setItem('hcbe_token', 'e2e-documents-token');
+    localStorage.setItem('hcbe_user', JSON.stringify(user));
+  }, admin);
+  await page.route('**/api/auth/me', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: admin }),
+  }));
+  await page.route('**/api/documents/admin', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: documents }),
+  }));
+
+  await page.goto('/admin/documents');
+  await expect(page.getByRole('heading', { level: 1, name: /gestion des documents/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /registre documentaire/i })).toBeVisible();
+  await expect(page.getByRole('table').getByText('Règlement général')).toBeVisible();
+  await expect(page.getByRole('table').getByText('Guide administratif')).toBeVisible();
+
+  await page.locator('#document-search').fill('gouvernance');
+  await expect(page.getByRole('table').getByText('Règlement général')).toBeVisible();
+  await expect(page.getByText('Guide administratif')).toHaveCount(0);
+  await expect(page.getByText(/1 résultat affiché/i)).toBeVisible();
+  await page.getByRole('button', { name: /réinitialiser/i }).click();
+  await page.locator('#document-filter').selectOption('inactive');
+  await expect(page.getByRole('table').getByText('Guide administratif')).toBeVisible();
+  await expect(page.getByText('Règlement général')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'English' }).click();
+  await expect(page.getByRole('heading', { name: /document registry/i })).toBeVisible();
+  await expect(page.locator('#document-search')).toHaveAttribute('placeholder', /search by title/i);
+  if (process.env.E2E_CAPTURE_VISUALS) await page.screenshot({ path: 'test-results/admin-documents-desktop.png', fullPage: true });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+  await expect(page.locator('h3').filter({ hasText: 'Guide administratif' })).toBeVisible();
+  if (process.env.E2E_CAPTURE_VISUALS) await page.screenshot({ path: 'test-results/admin-documents-mobile.png', fullPage: true });
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+    .exclude('[aria-hidden="true"]')
+    .analyze();
+  expect(results.violations).toEqual([]);
+});
+
 test('administrator help centre is searchable, shareable, accessible and responsive', async ({ page }) => {
   const admin = {
     id: '99999999-9999-9999-9999-999999999999', email: 'guide@hcbe.invalid', firstName: 'Awa', lastName: 'Guide',
